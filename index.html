@@ -1,0 +1,1261 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Meus Medicamentos</title><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#12756a"><link rel="icon" href="icon-192.png"><link rel="apple-touch-icon" href="icon-192.png"><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:wght@600;700;800&display=swap"><style>html{padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom);}body{margin:0}[hidden]{display:none!important}
+:root{
+/* Layout: one scrolling column (max 560px), sticky title bar, week strip, bottom tab bar, floating "Adicionar". Palette: pine ink, pharmacy teal, amber for stock alerts, rose for errors. Type: Bricolage Grotesque for titles, Atkinson Hyperlegible for everything people must read. */
+--bg:#eef3f1;--card:#ffffff;--ink:#13302a;--muted:#4b605b;--line:#d7e2de;
+--accent:#12756a;--accent-ink:#ffffff;--accent-soft:#d6eee8;
+--warn:#8f4300;--warn-soft:#fdebd3;--bad:#b3261e;--bad-soft:#fde4e1;--info:#1d4f91;--info-soft:#e3edfb;
+--shadow:0 6px 18px rgba(19,48,42,.14);
+--f-display:"Bricolage Grotesque","Atkinson Hyperlegible",system-ui,sans-serif;
+--f-body:"Atkinson Hyperlegible",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+--navh:68px;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+--bg:#0f1816;--card:#18231f;--ink:#e9f2ef;--muted:#a8bbb6;--line:#2a3a35;
+--accent:#5fc9b3;--accent-ink:#06201a;--accent-soft:#1d3d36;
+--warn:#f4b574;--warn-soft:#3a2a17;--bad:#f59a92;--bad-soft:#3d1f1c;--info:#9fc2f2;--info-soft:#1b2a40;
+--shadow:0 6px 18px rgba(0,0,0,.5);color-scheme:dark}}
+:root[data-theme="dark"]{
+--bg:#0f1816;--card:#18231f;--ink:#e9f2ef;--muted:#a8bbb6;--line:#2a3a35;
+--accent:#5fc9b3;--accent-ink:#06201a;--accent-soft:#1d3d36;
+--warn:#f4b574;--warn-soft:#3a2a17;--bad:#f59a92;--bad-soft:#3d1f1c;--info:#9fc2f2;--info-soft:#1b2a40;
+--shadow:0 6px 18px rgba(0,0,0,.5);color-scheme:dark}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:17px;line-height:1.45;
+padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 170px}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:60;background:var(--bg)}
+button,input,select,textarea{font:inherit;color:inherit}
+button{cursor:pointer;-webkit-tap-highlight-color:transparent}
+:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+h1,h2,h3{font-family:var(--f-display);margin:0;text-wrap:balance;line-height:1.15}
+p{margin:0}
+.ic{width:24px;height:24px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.wrap{max-width:560px;margin:0 auto}
+/* header */
+.hd{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:var(--bg);display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 0 10px;max-width:560px;margin:0 auto}
+.hd h1{font-size:28px;font-weight:800}
+.hd button{background:none;border:0;min-height:48px;min-width:48px;padding:0 6px;font-weight:700;color:var(--accent);display:flex;align-items:center;gap:6px}
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:54px;padding:0 22px;border-radius:16px;border:2px solid var(--accent);background:var(--accent);color:var(--accent-ink);font-weight:700;font-size:17px;width:100%}
+.btn.sec{background:transparent;color:var(--accent)}
+.btn.ghost{background:transparent;border-color:var(--line);color:var(--ink)}
+.btn.bad{background:var(--bad);border-color:var(--bad);color:#fff}
+.btn.badl{background:transparent;border-color:var(--bad);color:var(--bad)}
+.btn.sm{min-height:44px;width:auto;padding:0 16px;font-size:16px}
+.btn[disabled]{opacity:.45}
+.stack{display:flex;flex-direction:column;gap:10px}
+.rowflex{display:flex;gap:10px;flex-wrap:wrap}
+.rowflex>*{flex:1 1 140px}
+/* week */
+.week{display:grid;grid-template-columns:repeat(7,1fr);gap:2px;padding:4px 0}
+.wd{background:none;border:0;display:flex;flex-direction:column;align-items:center;gap:6px;padding:6px 0;min-height:76px}
+.wl{font-size:14px;color:var(--muted);font-weight:700}
+.wn{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;font-weight:700;font-size:17px;border:2px solid var(--line);background:var(--card)}
+.wn.part{border-color:var(--accent)}
+.wn.full{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.wd.sel .wn{box-shadow:0 0 0 3px var(--bg),0 0 0 6px var(--ink)}
+.wd.tod .wl{color:var(--accent)}
+.wnav{display:flex;justify-content:space-between;margin-bottom:6px}
+.wnav button{background:none;border:0;color:var(--accent);font-weight:700;min-height:44px;padding:0 4px;font-size:15px}
+.hello h2{font-size:28px}.hello .sub{color:var(--muted);margin-top:2px}.cap{text-transform:capitalize}
+.hello{margin:6px 0 14px}
+.bar{height:12px;background:var(--line);border-radius:8px;overflow:hidden;margin:8px 0 4px}
+.bar i{display:block;height:100%;background:var(--accent);border-radius:8px;transition:width .35s ease}
+.prog{margin-bottom:16px}.prog p{color:var(--muted);font-size:16px}
+/* cards & rows */
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px}
+.note{border-radius:18px;padding:14px 16px;display:flex;gap:12px;align-items:flex-start;margin-bottom:12px}
+.note.info{background:var(--info-soft);color:var(--info)}
+.note.warn{background:var(--warn-soft);color:var(--warn)}
+.note.bad{background:var(--bad-soft);color:var(--bad)}
+.note.ok{background:var(--accent-soft);color:var(--accent)}
+.note .nt{flex:1;min-width:0}.note b{display:block;font-size:18px}
+.note button.x{background:none;border:0;color:inherit;min-width:44px;min-height:44px;margin:-10px -8px 0 0}
+.note .btn{margin-top:10px}
+.tl{font-size:15px;font-weight:700;color:var(--muted);letter-spacing:.04em;margin:18px 0 8px;font-variant-numeric:tabular-nums}
+.row{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:6px 8px 6px 4px;margin-bottom:10px}
+.rt{flex:1;min-width:0;background:none;border:0;text-align:left;padding:10px 12px;display:flex;flex-direction:column;gap:2px}
+.rn{font-weight:700;font-size:19px;overflow-wrap:anywhere}.rs{color:var(--muted);font-size:15px}
+.row.done .rn{text-decoration:line-through;text-decoration-thickness:2px;color:var(--muted)}
+.dot{width:58px;height:58px;border-radius:50%;border:3px solid var(--accent);background:transparent;color:var(--accent-ink);display:grid;place-items:center;flex:none}
+.dot.on{background:var(--accent)}.dot.sk{background:var(--muted);border-color:var(--muted)}
+.dot .ic{width:28px;height:28px;stroke-width:3}
+.dot[disabled]{opacity:.4}
+.pop{animation:pop .25s ease}
+@keyframes pop{0%{transform:scale(.8)}60%{transform:scale(1.12)}100%{transform:scale(1)}}
+.chip{display:inline-flex;align-items:center;min-height:32px;padding:0 12px;border-radius:999px;background:var(--accent-soft);color:var(--accent);font-weight:700;font-size:15px}
+.chip.warn{background:var(--warn-soft);color:var(--warn)}
+.chip.mut{background:var(--line);color:var(--muted)}
+.sect{display:flex;align-items:center;justify-content:space-between;margin:26px 0 10px}
+.sect h2{font-size:22px}
+.sect button{background:var(--accent-soft);border:0;color:var(--accent);border-radius:50%;width:44px;height:44px;display:grid;place-items:center}
+.mcard{width:100%;text-align:left;display:flex;flex-direction:column;gap:6px;background:var(--card);border:1px solid var(--line);border-radius:20px;padding:16px;margin-bottom:10px}
+.mcard .rn{font-size:20px}
+.empty{border:2px dashed var(--line);border-radius:20px;padding:18px;color:var(--muted);display:flex;align-items:center;gap:12px;width:100%;background:none;text-align:left}
+/* nav + fab */
+#nav{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--card);border-top:1px solid var(--line);display:flex;justify-content:center;padding:0 max(8px,env(safe-area-inset-left,0px)) env(safe-area-inset-bottom,0px)}
+#nav .in{display:grid;grid-template-columns:repeat(4,1fr);width:100%;max-width:560px}
+#nav button{background:none;border:0;min-height:var(--navh);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--muted);font-size:14px;font-weight:700}
+#nav button.on{color:var(--accent)}
+#nav button.on .ic{stroke-width:2.6}
+#nav .bd{position:relative}
+#nav .bd.n::after{content:"";position:absolute;top:-2px;right:-6px;width:10px;height:10px;border-radius:50%;background:var(--bad)}
+#fab{position:fixed;z-index:29;right:max(16px,env(safe-area-inset-right,0px));bottom:calc(var(--navh) + env(safe-area-inset-bottom,0px) + 14px);min-height:56px;padding:0 22px 0 16px;border-radius:999px;border:0;background:var(--accent);color:var(--accent-ink);font-weight:800;font-size:18px;display:flex;align-items:center;gap:8px;box-shadow:var(--shadow)}
+/* sheet */
+.bk{position:fixed;inset:0;z-index:70;background:rgba(5,15,12,.55);display:flex;align-items:flex-end;justify-content:center}
+#sheet{background:var(--bg);width:100%;max-width:560px;max-height:88%;overflow-y:auto;border-radius:26px 26px 0 0;padding:10px 16px calc(20px + env(safe-area-inset-bottom,0px));animation:up .22s ease}
+@keyframes up{from{transform:translateY(40px);opacity:.5}to{transform:none;opacity:1}}
+#sheet .grab{width:44px;height:5px;border-radius:3px;background:var(--line);margin:0 auto 14px}
+#sheet h3{font-size:22px;margin-bottom:4px}
+#sheet .sub{color:var(--muted);margin-bottom:14px}
+.opt{display:flex;align-items:center;gap:14px;width:100%;min-height:62px;background:var(--card);border:1px solid var(--line);border-radius:18px;padding:10px 14px;text-align:left;font-weight:700;font-size:18px;margin-bottom:8px}
+.opt .ic{color:var(--accent);width:28px;height:28px}
+.opt small{display:block;font-weight:400;color:var(--muted);font-size:15px}
+/* screens */
+#scr{position:fixed;inset:0;z-index:50;background:var(--bg);overflow-y:auto;padding-top:env(safe-area-inset-top,0px);padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-bottom:calc(30px + env(safe-area-inset-bottom,0px))}
+.scr{max-width:560px;margin:0 auto;display:flex;flex-direction:column;min-height:calc(100vh - 60px)}
+.scr .top{display:flex;align-items:center;justify-content:space-between;min-height:60px;position:sticky;top:0;background:var(--bg);z-index:5}
+.icb{background:var(--card);border:1px solid var(--line);width:48px;height:48px;border-radius:50%;display:grid;place-items:center;color:var(--ink)}
+.lnk{background:none;border:0;color:var(--accent);font-weight:700;min-height:48px;padding:0 6px;font-size:17px}
+.scr h1{font-size:28px;margin:6px 0 4px}.scr .lead{color:var(--muted);margin-bottom:16px}
+.scr .grow{flex:1}
+.scr .foot{position:sticky;bottom:0;background:var(--bg);padding:14px 0 6px;display:flex;flex-direction:column;gap:10px}
+.steps{height:6px;background:var(--line);border-radius:4px;overflow:hidden}.steps i{display:block;height:100%;background:var(--accent);transition:width .3s}
+.ctx{color:var(--muted);font-size:16px;margin-top:6px}
+.sel{background:var(--accent-soft)}
+.rad{display:flex;align-items:center;justify-content:space-between;gap:10px;width:100%;min-height:62px;background:var(--card);border:2px solid var(--line);border-radius:18px;padding:10px 16px;text-align:left;font-weight:700;margin-bottom:10px;font-size:18px}
+.rad .tick{width:28px;height:28px;border-radius:50%;border:3px solid var(--line);flex:none}
+.rad.on{border-color:var(--accent);background:var(--accent-soft)}
+.rad.on .tick{border-color:var(--accent);background:radial-gradient(circle,var(--accent) 45%,transparent 50%)}
+.rad.chk .tick{border-radius:8px}
+.rad.chk.on .tick{background:var(--accent)}
+.fld{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.fld>label,.lbl{font-weight:700;font-size:16px}
+.in,.fld input,.fld select,.fld textarea{width:100%;min-height:54px;padding:10px 14px;border-radius:14px;border:2px solid var(--line);background:var(--card)}
+.fld textarea{min-height:90px}
+.fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--accent);outline:0}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.days{display:flex;flex-wrap:wrap;gap:8px}
+.days button,.pill{min-height:48px;min-width:54px;padding:0 14px;border-radius:14px;border:2px solid var(--line);background:var(--card);font-weight:700}
+.days button.on,.pill.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent)}
+.stepper{display:flex;align-items:center;gap:12px}
+.stepper button{width:52px;height:52px;border-radius:50%;border:2px solid var(--accent);background:none;color:var(--accent);font-size:26px;font-weight:700}
+.stepper b{min-width:2ch;text-align:center;font-size:22px}
+.sw{display:flex;align-items:center;justify-content:space-between;min-height:56px;gap:12px;font-weight:700;font-size:18px}
+.sw button{width:62px;height:36px;border-radius:20px;border:0;background:var(--line);position:relative;flex:none}
+.sw button::after{content:"";position:absolute;top:4px;left:4px;width:28px;height:28px;border-radius:50%;background:#fff;transition:left .2s}
+.sw button.on{background:var(--accent)}.sw button.on::after{left:30px}
+.sug{display:flex;flex-direction:column}
+.sug button{display:flex;align-items:center;justify-content:space-between;min-height:58px;background:none;border:0;border-bottom:1px solid var(--line);text-align:left;font-size:18px;padding:0 4px}
+.sug button.cust{color:var(--accent);font-weight:700;border-bottom:0}
+/* faces + charts */
+.faces{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center}
+.faces button{background:none;border:0;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:14px;color:var(--muted);min-height:64px}
+.face{width:40px;height:40px}
+.face circle.f{fill:var(--accent-soft);stroke:var(--accent);stroke-width:1.6}
+.face .m,.face .e{stroke:var(--ink);stroke-width:1.8;fill:none;stroke-linecap:round}
+.face .e{fill:var(--ink);stroke:none}
+.face.g circle.f{fill:var(--line);stroke:var(--line)}
+.moods{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:14px}
+.moods button{background:var(--card);border:2px solid var(--line);border-radius:16px;min-height:88px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;font-size:13px;font-weight:700;padding:4px 2px}
+.moods button.on{border-color:var(--accent);background:var(--accent-soft)}
+.moods .face{width:44px;height:44px}
+.chart{width:100%;height:auto;display:block}
+.chart text{fill:var(--muted);font-size:11px;font-family:var(--f-body)}
+.chart .bar{fill:var(--accent)}.chart .bg{fill:var(--line)}.chart .ln{stroke:var(--accent);stroke-width:2.2;fill:none;stroke-linejoin:round}.chart .pt{fill:var(--accent)}.chart .gl{stroke:var(--line);stroke-width:1}
+.chart .gd{stroke:var(--warn);stroke-width:1.5;stroke-dasharray:4 3}
+.big{font-family:var(--f-display);font-size:34px;font-weight:800;font-variant-numeric:tabular-nums}
+.tabs{display:grid;grid-template-columns:1fr 1fr;border-bottom:2px solid var(--line);margin-bottom:14px}
+.tabs button{background:none;border:0;min-height:52px;font-weight:800;letter-spacing:.04em;color:var(--muted);border-bottom:3px solid transparent;margin-bottom:-2px}
+.tabs button.on{color:var(--accent);border-color:var(--accent)}
+.li{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:1px solid var(--line)}
+.li .t{flex:1;min-width:0}.li small{color:var(--muted);display:block}
+.li button{background:none;border:0;color:var(--bad);min-width:48px;min-height:48px}
+/* chat */
+.chat{display:flex;flex-direction:column;gap:10px;margin-bottom:12px}
+.msg{max-width:88%;padding:12px 14px;border-radius:18px;white-space:pre-wrap;overflow-wrap:anywhere}
+.msg.u{align-self:flex-end;background:var(--accent);color:var(--accent-ink);border-bottom-right-radius:6px}
+.msg.a{align-self:flex-start;background:var(--card);border:1px solid var(--line);border-bottom-left-radius:6px}
+.sugs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.sugs button{min-height:44px;border-radius:999px;border:2px solid var(--line);background:var(--card);padding:0 14px;font-weight:700;font-size:15px}
+.send{display:flex;gap:8px}.send input{flex:1;min-height:54px;border-radius:27px;border:2px solid var(--line);background:var(--card);padding:0 18px;min-width:0}
+.send button{width:54px;height:54px;border-radius:50%;border:0;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center}
+/* report */
+.rep h3{font-size:19px;margin:18px 0 6px}
+.rep table{width:100%;border-collapse:collapse;font-size:15px}
+.rep th,.rep td{border:1px solid var(--line);padding:8px;text-align:left;vertical-align:top}
+.rep th{background:var(--accent-soft)}
+.rep .tw{overflow-x:auto}
+#toast{width:max-content;position:fixed;left:50%;transform:translateX(-50%);bottom:calc(var(--navh) + env(safe-area-inset-bottom,0px) + 84px);background:var(--ink);color:var(--bg);padding:12px 18px;border-radius:14px;z-index:90;max-width:min(92vw,520px);font-weight:700;box-shadow:var(--shadow)}
+#toast[hidden]{display:none}
+.vh{position:absolute;width:1px;height:1px;opacity:0;pointer-events:none}
+.sep{height:1px;background:var(--line);margin:16px 0}
+.small{font-size:15px;color:var(--muted)}
+a.lk{color:var(--accent);font-weight:700}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+#cfm{align-items:center;padding:16px;z-index:80}
+.cbox{background:var(--card);border-radius:22px;padding:20px;max-width:400px;width:100%}
+.cbox h3{font-size:22px;margin-bottom:8px}.cbox p{color:var(--muted);margin-bottom:16px}
+.cbox .rowflex{flex-wrap:nowrap}
+
+.faces button{min-width:0;padding:0}.faces .face{width:100%;max-width:38px;height:auto;aspect-ratio:1}.wrap{padding-bottom:140px}
+
+.sug .lnk{border-bottom:0;justify-content:flex-start;text-align:left;font-size:15px;min-height:44px;padding:0}
+
+</style></head><body>
+<div class="hd" id="hd"></div>
+<main class="wrap" id="main"></main>
+<button id="fab" data-a="add" aria-label="Adicionar"><svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Adicionar</button>
+<nav id="nav"><div class="in">
+<button data-a="tab" data-v="hoje" data-t="hoje"><span class="bd"><svg class="ic" viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/></svg></span>Hoje</button>
+<button data-a="tab" data-v="prog" data-t="prog"><span class="bd"><svg class="ic" viewBox="0 0 24 24"><path d="M5 20V11M12 20V4M19 20v-6"/></svg></span>Progresso</button>
+<button data-a="tab" data-v="apoio" data-t="apoio"><span class="bd"><svg class="ic" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></svg></span>Apoio</button>
+<button data-a="tab" data-v="trat" data-t="trat"><span class="bd" id="bdTrat"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="9" width="18" height="6" rx="3" transform="rotate(-45 12 12)"/><path d="M9.2 9.2l5.6 5.6"/></svg></span>Tratamento</button>
+</div></nav>
+<div id="scr" hidden></div>
+<div class="bk" id="bk" hidden><div id="sheet" role="dialog" aria-modal="true" tabindex="-1"></div></div>
+<div class="bk" id="cfm" hidden><div class="cbox" role="alertdialog" aria-modal="true"><h3 id="cfmT"></h3><p id="cfmP"></p><div class="rowflex"><button class="btn ghost" id="cfmN">Cancelar</button><button class="btn bad" id="cfmY">Confirmar</button></div></div></div>
+<div id="toast" hidden role="status"></div>
+
+<script>window.API_URL="";</script>
+<script>
+(function(){"use strict";
+/* ===== núcleo: utilidades, estado, migração ===== */
+var KEY="med-calendar-v1";
+var DAYS=["Dom","Seg","Ter","Qua","Qui","Sex","Sáb"];
+var DAYS_LONG=["domingo","segunda-feira","terça-feira","quarta-feira","quinta-feira","sexta-feira","sábado"];
+var MONTHS=["janeiro","fevereiro","março","abril","maio","junho","julho","agosto","setembro","outubro","novembro","dezembro"];
+var UNITS=["comprimido(s)","cápsula(s)","gota(s)","mL","aplicação(ões)","sachê(s)","dose(s)","unidade(s)"];
+function $(s,r){return (r||document).querySelector(s);}
+function $$(s,r){return [].slice.call((r||document).querySelectorAll(s));}
+function esc(s){return String(s==null?"":s).replace(/[&<>"']/g,function(c){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c];});}
+function pad(n){return n<10?"0"+n:""+n;}
+function iso(d){return d.getFullYear()+"-"+pad(d.getMonth()+1)+"-"+pad(d.getDate());}
+function pd(s){var p=String(s).split("-");return new Date(+p[0],+p[1]-1,+p[2]);}
+function addD(d,n){return new Date(d.getFullYear(),d.getMonth(),d.getDate()+n);}
+function today(){var n=new Date();return new Date(n.getFullYear(),n.getMonth(),n.getDate());}
+function uid(){return "i"+Date.now().toString(36)+Math.random().toString(36).slice(2,6);}
+function fmtBR(s){var p=String(s).split("-");return p[2]+"/"+p[1]+"/"+p[0];}
+function fmtDM(d){return pad(d.getDate())+"/"+pad(d.getMonth()+1);}
+function num(v){var x=parseFloat(String(v).replace(",","."));return isNaN(x)?null:x;}
+function r2(x){return Math.round(x*100)/100;}
+function norm(s){return String(s).normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();}
+function tkey(t){return t||"99:99";}
+
+function blank(){return {v:2,name:"",meds:[],plans:[],checks:{},logs:[],records:[],moods:{},prn:[],goals:{},onboarded:false,hideTip:false,alarmsOn:false,snooze:{}};}
+function fixMed(m){
+  var times=Array.isArray(m.times)?m.times.map(String):(m.time?[String(m.time)]:(m.prn?[]:[""]));
+  return {id:String(m.id||uid()),name:String(m.name||"Medicamento"),unit:String(m.unit||"dose(s)"),qty:(+m.qty>0?+m.qty:1),
+    doseText:(m.doseText!==undefined?String(m.doseText):String(m.dose||"")),times:times,
+    days:Array.isArray(m.days)?m.days.filter(function(x){return x>=0&&x<=6;}):[],start:String(m.start||""),dur:parseInt(m.dur,10)||0,
+    prn:!!m.prn,purpose:Array.isArray(m.purpose)?m.purpose.map(String):[],stockOn:!!m.stockOn,stock:+m.stock||0,limit:(m.limit!==undefined&&m.limit!==null?+m.limit:10)};
+}
+function fixPlan(p){
+  return {id:String(p.id||uid()),kind:(["measure","activity","mood"].indexOf(p.kind)>=0?p.kind:"activity"),type:String(p.type||""),name:String(p.name||""),
+    times:Array.isArray(p.times)?p.times.map(String):[],days:Array.isArray(p.days)?p.days.filter(function(x){return x>=0&&x<=6;}):[],start:String(p.start||""),dur:parseInt(p.dur,10)||0};
+}
+function migrate(o){
+  var s=blank();if(!o||typeof o!=="object")return s;
+  s.name=String(o.name||"");
+  s.meds=(Array.isArray(o.meds)?o.meds:[]).map(fixMed);
+  s.plans=(Array.isArray(o.plans)?o.plans:[]).map(fixPlan);
+  s.logs=Array.isArray(o.logs)?o.logs:[];
+  s.records=Array.isArray(o.records)?o.records:[];
+  s.moods=(o.moods&&typeof o.moods==="object")?o.moods:{};
+  s.prn=Array.isArray(o.prn)?o.prn:[];
+  s.goals=(o.goals&&typeof o.goals==="object")?o.goals:{};
+  s.hideTip=!!o.hideTip;s.alarmsOn=!!o.alarmsOn;s.snooze=(o.snooze&&typeof o.snooze==="object")?o.snooze:{};
+  var oc=(o.checks&&typeof o.checks==="object")?o.checks:{};
+  if(!o.v||o.v<2){
+    var nc={};
+    Object.keys(oc).forEach(function(k){
+      var p=k.split("|");
+      if(p.length===2){var md=null;s.meds.forEach(function(m){if(m.id===p[1])md=m;});nc[p[0]+"|"+p[1]+"|"+((md&&md.times[0])||"")]=1;}
+      else nc[k]=oc[k];
+    });
+    s.checks=nc;s.onboarded=s.meds.length>0;
+  }else{s.checks=oc;s.onboarded=!!o.onboarded;}
+  return s;
+}
+var S=blank();
+try{var _r=localStorage.getItem(KEY);if(_r)S=migrate(JSON.parse(_r));}catch(e){}
+var saveT=null;
+function save(){
+  try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}
+  if(S.alarmsOn){clearTimeout(saveT);saveT=setTimeout(function(){almSync(false);},2500);}
+}
+
+/* ===== agenda ===== */
+function dueOn(it,d){
+  if(it.days&&it.days.length&&it.days.indexOf(d.getDay())<0)return false;
+  if(it.start){var s=pd(it.start);if(d<s)return false;if(it.dur>0&&d>addD(s,it.dur-1))return false;}
+  return true;
+}
+function findItem(id){
+  var r=null;S.meds.forEach(function(m){if(m.id===id)r=m;});
+  if(!r)S.plans.forEach(function(p){if(p.id===id)r=p;});
+  return r;
+}
+function slotsOn(d){
+  var ds=iso(d),out=[];
+  S.meds.forEach(function(m){
+    if(m.prn||!dueOn(m,d))return;
+    (m.times.length?m.times:[""]).forEach(function(t){out.push({key:ds+"|"+m.id+"|"+t,kind:"med",it:m,time:t,date:ds});});
+  });
+  S.plans.forEach(function(p){
+    if(!dueOn(p,d))return;
+    (p.times.length?p.times:[""]).forEach(function(t){out.push({key:ds+"|"+p.id+"|"+t,kind:p.kind,it:p,time:t,date:ds});});
+  });
+  out.sort(function(a,b){return tkey(a.time)<tkey(b.time)?-1:tkey(a.time)>tkey(b.time)?1:(a.it.name||"").localeCompare(b.it.name||"");});
+  return out;
+}
+function slotByKey(k){
+  var p=k.split("|"),it=findItem(p[1]);if(!it)return null;
+  return {key:k,kind:it.kind||"med",it:it,time:p.slice(2).join("|"),date:p[0]};
+}
+function st(k){return S.checks[k]||0;}
+function qtyText(m){
+  var q=(m.qty%1===0)?m.qty:String(m.qty).replace(".",",");
+  return q+" "+m.unit;
+}
+function medSub(m){var a=[qtyText(m)];if(m.doseText)a.push(m.doseText);return a.join(" · ");}
+function daysText(it){
+  if(!it.days||!it.days.length||it.days.length===7)return "Diariamente";
+  return it.days.slice().sort().map(function(i){return DAYS[i];}).join(", ");
+}
+function schedText(it){
+  var a=[];
+  if(it.prn)return "Quando necessário";
+  a.push(daysText(it));
+  var ts=(it.times||[]).filter(Boolean);
+  a.push(ts.length?ts.join(" · "):"Qualquer hora");
+  var t=a.join(" — ");
+  if(it.dur>0&&it.start){t+=" · até "+fmtDM(addD(pd(it.start),it.dur-1));}
+  return t;
+}
+/* estoque */
+function perDay(m){if(m.prn)return 0;var n=Math.max(1,m.times.length),dd=(m.days&&m.days.length)?m.days.length:7;return m.qty*n*dd/7;}
+function daysLeft(m){var p=perDay(m);return p>0?Math.floor(m.stock/p):null;}
+function lowStock(m){return m.stockOn&&m.stock<=m.limit;}
+function stockText(m){var s=(m.stock%1===0?m.stock:String(m.stock).replace(".",","));return s+" "+m.unit+" restante"+(m.stock===1?"":"s");}
+function setStatus(sl,val){
+  var old=st(sl.key);if(old===val)val=0;
+  if(val)S.checks[sl.key]=val;else delete S.checks[sl.key];
+  if(sl.kind==="med"){var m=sl.it;if(m.stockOn){
+    if(old===1&&val!==1)m.stock=r2(m.stock+m.qty);
+    if(val===1&&old!==1)m.stock=Math.max(0,r2(m.stock-m.qty));}}
+  save();
+  return val;
+}
+function dayStats(d){
+  var sl=slotsOn(d),tk=0,sk=0;
+  sl.forEach(function(s){var v=st(s.key);if(v===1)tk++;else if(v===2)sk++;});
+  return {tot:sl.length,tk:tk,sk:sk};
+}
+function streak(){
+  var n=0,t=today();
+  for(var i=0;i<400;i++){
+    var s=dayStats(addD(t,-i));
+    if(!s.tot)continue;
+    if(s.tk===s.tot)n++;else if(i>0)break;else continue;
+  }
+  return n;
+}
+
+/* ===== interface: ícones, folhas, telas, abas ===== */
+function svg(p){return '<svg class="ic" viewBox="0 0 24 24" aria-hidden="true">'+p+'</svg>';}
+var IC={
+ check:svg('<path d="M5 12.5l4.5 4.5L19 7.5"/>'),minus:svg('<path d="M6 12h12"/>'),
+ chev:svg('<path d="M9 5l7 7-7 7"/>'),back:svg('<path d="M15 5l-7 7 7 7"/>'),close:svg('<path d="M6 6l12 12M18 6L6 18"/>'),
+ bell:svg('<path d="M6 16v-5a6 6 0 0 1 12 0v5l2 2H4zM10 21h4"/>'),camera:svg('<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>'),
+ plus:svg('<path d="M12 5v14M5 12h14"/>'),sliders:svg('<path d="M4 7h9M19 7h1M4 17h1M11 17h9"/><circle cx="16" cy="7" r="2.4"/><circle cx="8" cy="17" r="2.4"/>'),
+ pill:svg('<rect x="3" y="9" width="18" height="6" rx="3" transform="rotate(-45 12 12)"/><path d="M9.2 9.2l5.6 5.6"/>'),
+ heart:svg('<path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.4A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/>'),
+ run:svg('<circle cx="14" cy="5" r="2"/><path d="M8 21l3-6 3 2 2 4M11 15l-1-5 4-1 3 3h3M10 10L7 12"/>'),
+ smile:svg('<circle cx="12" cy="12" r="9"/><path d="M8.5 14c2 2.2 5 2.2 7 0M9 9.5h.01M15 9.5h.01"/>'),
+ send:svg('<path d="M4 12l16-8-6 16-2.5-6.5z"/>'),chat:svg('<path d="M4 5h16v11H9l-5 4z"/>'),
+ doc:svg('<path d="M7 3h8l4 4v14H7z"/><path d="M15 3v4h4M10 12h6M10 16h6"/>'),pro:svg('<circle cx="12" cy="8" r="3.5"/><path d="M5 21a7 7 0 0 1 14 0M12 13v3M10.5 14.5h3"/>'),
+ alert:svg('<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18h.01"/>'),warn:svg('<circle cx="12" cy="12" r="9"/><path d="M12 7v6M12 16.5h.01"/>'),
+ info:svg('<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5h.01"/>')
+};
+var MOODN=["","Muito mal","Mal","Mais ou menos","Bem","Muito bem"];
+function face(n){
+  var m={1:"M8.3 17c1.9-2.6 5.5-2.6 7.4 0",2:"M8.7 16.4c1.7-1.4 5-1.4 6.6 0",3:"M9 16h6",4:"M8.7 14.6c1.7 1.6 5 1.6 6.6 0",5:"M7.8 14c2.2 3.4 6.2 3.4 8.4 0"}[n]||"M9 16h6";
+  return '<svg class="face'+(n?"":" g")+'" viewBox="0 0 24 24" aria-hidden="true"><circle class="f" cx="12" cy="12" r="10.5"/><circle class="e" cx="9" cy="10" r="1.2"/><circle class="e" cx="15" cy="10" r="1.2"/><path class="m" d="'+(n?m:"M9 16h6")+'"/></svg>';
+}
+var MEAS=[
+ {k:"pa",name:"Pressão arterial",f:[{id:"v",label:"Sistólica (máxima)",u:"mmHg"},{id:"v2",label:"Diastólica (mínima)",u:"mmHg"}],fmt:function(r){return r.v+"/"+r.v2+" mmHg";}},
+ {k:"gli",name:"Glicemia",f:[{id:"v",label:"Glicose",u:"mg/dL"}],fmt:function(r){return r.v+" mg/dL";}},
+ {k:"peso",name:"Peso",f:[{id:"v",label:"Peso",u:"kg"}],fmt:function(r){return String(r.v).replace(".",",")+" kg";}},
+ {k:"temp",name:"Temperatura",f:[{id:"v",label:"Temperatura",u:"°C"}],fmt:function(r){return String(r.v).replace(".",",")+" °C";}},
+ {k:"fc",name:"Batimentos do coração",f:[{id:"v",label:"Batimentos por minuto",u:"bpm"}],fmt:function(r){return r.v+" bpm";}},
+ {k:"spo2",name:"Saturação de oxigênio",f:[{id:"v",label:"Saturação",u:"%"}],fmt:function(r){return r.v+" %";}}
+];
+function measDef(k){var r=MEAS[0];MEAS.forEach(function(m){if(m.k===k)r=m;});return r;}
+var ACTS=["Beber água","Caminhar","Alongamento","Exercício","Meditar","Dormir cedo"];
+var SYMS=["Dor de cabeça","Náusea","Tontura","Cansaço","Sonolência","Insônia","Ansiedade","Dor no corpo","Febre","Falta de apetite","Palpitação","Outro"];
+function planName(p){return p.kind==="measure"?measDef(p.type).name:p.kind==="mood"?"Como você está se sentindo?":p.name;}
+
+/* ---- folha, tela, confirmação, aviso ---- */
+function openSheet(html){$("#sheet").innerHTML='<div class="grab"></div>'+html;$("#bk").hidden=false;$("#sheet").scrollTop=0;}
+function closeSheet(){$("#bk").hidden=true;$("#sheet").innerHTML="";}
+function openScr(html,name){var s=$("#scr");s.innerHTML='<div class="scr">'+html+'</div>';s.hidden=false;s.scrollTop=0;scr=name||null;}
+function closeScr(){var s=$("#scr");s.hidden=true;s.innerHTML="";scr=null;wOpen=false;F=null;render();if(onbFlow&&!S.onboarded)onbShow();}
+var scr=null,cfmFn=null,toastT=null;
+function confirmBox(title,msg,yes,fn){$("#cfmT").textContent=title;$("#cfmP").textContent=msg;$("#cfmY").textContent=yes||"Confirmar";cfmFn=fn;$("#cfm").hidden=false;$("#cfmN").focus();}
+function toast(m){var t=$("#toast");t.textContent=m;t.hidden=false;clearTimeout(toastT);toastT=setTimeout(function(){t.hidden=true;},3400);}
+function buzz(){try{if(navigator.vibrate)navigator.vibrate(18);}catch(e){}}
+function topBar(title,right){return '<div class="top"><button class="icb" data-a="scrx" aria-label="Voltar">'+IC.back+'</button><span>'+(right||"")+'</span></div>'+(title?'<h1>'+title+'</h1>':"");}
+
+/* ---- estado de abas ---- */
+var tab="hoje",selDate=today(),progTab="g",RT={notif:null,exact:null};
+function isNative(){return !!(window.Capacitor&&Capacitor.Plugins&&Capacitor.Plugins.LocalNotifications);}
+
+function render(){
+  var titles={hoje:"Hoje",prog:"Progresso",apoio:"Apoio",trat:"Tratamento"},right="";
+  if(tab==="prog")right='<button data-a="share">Compartilhar</button>';
+  if(tab==="trat")right='<button data-a="settings" aria-label="Configurações">'+IC.sliders+'</button>';
+  $("#hd").innerHTML='<h1>'+titles[tab]+'</h1>'+right;
+  $("#main").innerHTML=({hoje:viewHoje,prog:viewProg,apoio:viewApoio,trat:viewTrat})[tab]();
+  $$("#nav button").forEach(function(b){b.classList.toggle("on",b.dataset.t===tab);});
+  var ri=remInfo();$("#bdTrat").classList.toggle("n",!!ri);
+}
+
+/* ---- HOJE ---- */
+function weekStrip(){
+  var ws=addD(selDate,-selDate.getDay()),h='<div class="week">',t=iso(today());
+  for(var i=0;i<7;i++){
+    var d=addD(ws,i),ds=iso(d),s=dayStats(d),mk=s.tot?(s.tk===s.tot?"full":(s.tk>0?"part":"")):"";
+    h+='<button class="wd'+(ds===iso(selDate)?" sel":"")+(ds===t?" tod":"")+'" data-a="day" data-v="'+ds+'" aria-label="'+DAYS_LONG[d.getDay()]+', dia '+d.getDate()+'"><span class="wl">'+DAYS[d.getDay()]+'</span><span class="wn '+mk+'">'+d.getDate()+'</span></button>';
+  }
+  return h+'</div><div class="wnav"><button data-a="wk" data-v="-1">‹ Semana anterior</button><button data-a="wk" data-v="1">Próxima semana ›</button></div>';
+}
+function slotName(s){return s.kind==="med"?s.it.name:planName(s.it);}
+function slotSub(s){return s.kind==="med"?medSub(s.it):s.kind==="measure"?"Medição":s.kind==="mood"?"Humor e sintomas":"Atividade";}
+function slotRow(s,fut){
+  var v=st(s.key),ic=v===1?IC.check:v===2?IC.minus:"";
+  return '<div class="row'+(v===1?" done":"")+'"><button class="rt" data-a="slot" data-k="'+esc(s.key)+'"><span class="rn">'+esc(slotName(s))+'</span><span class="rs">'+esc(slotSub(s))+(v===2?" · pulada":"")+'</span></button><button class="dot'+(v===1?" on":v===2?" sk":"")+'" data-a="tog" data-k="'+esc(s.key)+'" aria-label="'+(v===1?"Desmarcar ":"Marcar ")+esc(slotName(s))+'"'+(fut?" disabled":"")+'>'+ic+'</button></div>';
+}
+function viewHoje(){
+  var d=selDate,t=today(),isT=iso(d)===iso(t),fut=d>t,sl=slotsOn(d),tot=sl.length,tk=sl.filter(function(s){return st(s.key)===1;}).length;
+  var hr=new Date().getHours(),gr=hr<12?"Bom dia":hr<18?"Boa tarde":"Boa noite",h=weekStrip();
+  h+='<div class="hello">'+(isT?'<h2>'+gr+(S.name?", "+esc(S.name):"")+'</h2>':'<h2 class="cap">'+DAYS_LONG[d.getDay()]+'</h2>')+'<p class="sub">'+d.getDate()+" de "+MONTHS[d.getMonth()]+(fut?" · só visualização":"")+'</p></div>';
+  if(!S.meds.length&&!S.plans.length){
+    return h+'<div class="card stack"><h3>Vamos montar seu tratamento</h3><p class="small">Cadastre seus remédios para receber lembretes e acompanhar cada dose.</p><button class="btn" data-a="newmed">'+IC.pill+'Adicionar medicamento</button><button class="btn sec" data-a="rx">'+IC.camera+'Ler receita pela foto</button></div>';
+  }
+  if(tot)h+='<div class="prog"><div class="bar"><i style="width:'+Math.round(tk*100/tot)+'%"></i></div><p>'+tk+' de '+tot+' concluídos</p></div>';
+  if(isT&&tot&&tk===tot){var sk=streak();h+='<div class="note ok">'+IC.check+'<div class="nt"><b>Tudo certo por hoje</b>'+(sk>1?sk+' dias seguidos em dia.':'Obrigada por cuidar de você.')+'</div></div>';}
+  if(!S.hideTip&&tot)h+='<div class="note info">'+IC.info+'<div class="nt"><b>Como funciona</b>Toque no círculo para marcar que tomou. Toque no nome para pular a dose ou ver mais opções.</div><button class="x" data-a="hidetip" aria-label="Ocultar dica">'+IC.close+'</button></div>';
+  if(isT)S.meds.forEach(function(m){
+    if(!lowStock(m)||S.snooze[m.id]===iso(t))return;
+    var dl=daysLeft(m);
+    h+='<div class="note warn">'+IC.alert+'<div class="nt"><b>'+esc(m.name)+(dl!==null?(dl<=0?" acaba hoje":" vai acabar em "+dl+(dl===1?" dia":" dias")):" está acabando")+'</b>Estoque atual: '+esc(stockText(m))+'.<button class="btn sm sec" style="margin-top:10px" data-a="refill" data-id="'+esc(m.id)+'">Reabastecer</button></div><button class="x" data-a="snooze" data-id="'+esc(m.id)+'" aria-label="Dispensar aviso">'+IC.close+'</button></div>';
+  });
+  var last=null;
+  sl.forEach(function(s){var tl=s.time||"Qualquer hora";if(tl!==last){h+='<div class="tl">'+esc(tl)+'</div>';last=tl;}h+=slotRow(s,fut);});
+  var prn=S.meds.filter(function(m){return m.prn;});
+  if(prn.length){
+    h+='<div class="tl">QUANDO NECESSÁRIO</div>';
+    prn.forEach(function(m){
+      var n=S.prn.filter(function(x){return x.med===m.id&&x.ts.slice(0,10)===iso(d);}).length;
+      h+='<div class="row"><button class="rt" data-a="medv" data-id="'+esc(m.id)+'"><span class="rn">'+esc(m.name)+'</span><span class="rs">'+esc(medSub(m))+' · '+(n?n+(n===1?" vez":" vezes")+" neste dia":"nenhuma vez neste dia")+'</span></button>'+(fut?'':'<button class="btn sm" data-a="prn" data-id="'+esc(m.id)+'">Tomei</button>')+'</div>';
+    });
+  }
+  if(!tot&&!prn.length)h+='<div class="empty">'+IC.smile+'Nenhum horário marcado para este dia.</div>';
+  return h;
+}
+
+/* ---- PROGRESSO ---- */
+function adhChart(){
+  var t=today(),pts=[],i,sum=0,n=0;
+  for(i=6;i>=0;i--){var d=addD(t,-i),s=dayStats(d);pts.push({d:d,p:s.tot?Math.round(s.tk*100/s.tot):null});if(s.tot){sum+=s.tk*100/s.tot;n++;}}
+  var g='<svg class="chart" viewBox="0 0 320 132" role="img" aria-label="Doses em dia nos últimos 7 dias">';
+  pts.forEach(function(p,k){
+    var x=12+k*44,h=p.p===null?0:p.p*0.8;
+    g+='<rect class="bg" x="'+x+'" y="10" width="32" height="80" rx="8"/>';
+    if(h>0)g+='<rect class="bar" x="'+x+'" y="'+(90-h)+'" width="32" height="'+h+'" rx="8"/>';
+    g+='<text x="'+(x+16)+'" y="108" text-anchor="middle">'+DAYS[p.d.getDay()]+'</text><text x="'+(x+16)+'" y="123" text-anchor="middle">'+(p.p===null?"–":p.p+"%")+'</text>';
+  });
+  return {svg:g+'</svg>',avg:n?Math.round(sum/n):null};
+}
+function spark(vals,vals2,goal){
+  var all=vals.concat(vals2||[]);if(goal!=null)all.push(goal);
+  var mn=Math.min.apply(null,all),mx=Math.max.apply(null,all);if(mn===mx){mn-=1;mx+=1;}
+  var W=300,H=80,px=10;
+  function X(i,n){return n<2?W/2:px+i*(W-2*px)/(n-1);}
+  function Y(v){return 8+(mx-v)*(H-16)/(mx-mn);}
+  function line(a,cls){var p=a.map(function(v,i){return X(i,a.length).toFixed(1)+","+Y(v).toFixed(1);}).join(" ");return '<polyline class="'+cls+'" points="'+p+'"/><circle class="pt" cx="'+X(a.length-1,a.length).toFixed(1)+'" cy="'+Y(a[a.length-1]).toFixed(1)+'" r="4.5"/>';}
+  var s='<svg class="chart" viewBox="0 0 300 '+H+'" aria-hidden="true">';
+  if(goal!=null)s+='<line class="gd" x1="0" x2="300" y1="'+Y(goal).toFixed(1)+'" y2="'+Y(goal).toFixed(1)+'"/>';
+  s+=line(vals,"ln");if(vals2&&vals2.length)s+=line(vals2,"ln");
+  return s+'</svg>';
+}
+function recsOf(k){return S.records.filter(function(r){return r.k===k;}).sort(function(a,b){return a.ts<b.ts?-1:1;});}
+function viewProg(){
+  var h='<div class="tabs"><button class="'+(progTab==="g"?"on":"")+'" data-a="ptab" data-v="g">GRÁFICOS</button><button class="'+(progTab==="l"?"on":"")+'" data-a="ptab" data-v="l">LISTA</button></div>';
+  return h+(progTab==="g"?progCharts():progList());
+}
+function progCharts(){
+  var h="",a=adhChart(),t=today(),i;
+  h+='<div class="card" style="margin-bottom:14px"><h3>Doses em dia</h3><p class="small" style="margin:4px 0 10px">Últimos 7 dias'+(a.avg!==null?" · média de "+a.avg+"%":"")+'</p>'+a.svg+'</div>';
+  h+='<div class="card" style="margin-bottom:14px"><h3>Humor</h3><p class="small" style="margin:4px 0 8px">Últimos 7 dias. Toque para registrar.</p><div class="faces">';
+  for(i=6;i>=0;i--){var d=addD(t,-i),ds=iso(d),mo=S.moods[ds];h+='<button data-a="mood" data-v="'+ds+'" aria-label="Humor de '+DAYS_LONG[d.getDay()]+'">'+face(mo?mo.m:0)+DAYS[d.getDay()].toLowerCase()+'</button>';}
+  h+='</div></div>';
+  MEAS.forEach(function(md){
+    var rs=recsOf(md.k);if(!rs.length)return;
+    var last=rs[rs.length-1],r=rs.slice(-12),goal=(md.k==="peso"&&S.goals.peso)?S.goals.peso:null;
+    h+='<div class="card" style="margin-bottom:14px"><h3>'+md.name+'</h3><div class="big" style="margin:6px 0 0">'+esc(md.fmt(last))+'</div><p class="small" style="margin-bottom:8px">'+fmtBR(last.ts.slice(0,10))+' às '+last.ts.slice(11,16)+'</p>'+(r.length>1?spark(r.map(function(x){return x.v;}),md.k==="pa"?r.map(function(x){return x.v2;}):null,goal):"")+(goal!=null?'<p class="small">Meta de peso: '+String(goal).replace(".",",")+' kg</p>':"")+'<div class="rowflex" style="margin-top:10px"><button class="btn sm sec" data-a="meas" data-v="'+md.k+'">Registrar</button>'+(md.k==="peso"?'<button class="btn sm ghost" data-a="goal">'+(goal!=null?"Mudar meta":"Definir meta")+'</button>':"")+'</div></div>';
+  });
+  if(!S.records.length)h+='<div class="card stack"><h3>Medições</h3><p class="small">Registre pressão, glicemia, peso e outras medidas para ver a evolução aqui.</p><button class="btn sec" data-a="meas">'+IC.plus+'Registrar medição</button></div>';
+  var pre=iso(t).slice(0,7),oc=S.logs.filter(function(l){return String(l.date).indexOf(pre)===0;}).length;
+  h+='<div class="card stack"><h3>Ocorrências do mês</h3><p class="small">'+(oc?oc+(oc===1?" registro":" registros")+" de reação, mudança de horário ou dose em dobro.":"Nenhuma ocorrência registrada neste mês.")+'</p><button class="btn sec" data-a="oc">Registrar ocorrência</button></div>';
+  return h;
+}
+function listEntries(){
+  var e=[];
+  S.records.forEach(function(r){var d=measDef(r.k);e.push({ts:r.ts,t:d.name+": "+d.fmt(r),s:r.note||"",id:"rec:"+r.id});});
+  Object.keys(S.moods).forEach(function(k){var m=S.moods[k];e.push({ts:k+"T12:00",t:"Humor: "+MOODN[m.m],s:(m.sym||[]).join(", ")+(m.note?(m.sym&&m.sym.length?" · ":"")+m.note:""),id:"mood:"+k});});
+  S.logs.forEach(function(l){var it=findItem(l.med);e.push({ts:l.date+"T12:00",t:"Ocorrência"+(it?" · "+it.name:""),s:(l.types||[]).map(function(x){return OCN[x]||x;}).join(", ")+(l.note?" · "+l.note:""),id:"log:"+l.id});});
+  S.prn.forEach(function(p){var it=findItem(p.med);e.push({ts:p.ts,t:(it?it.name:"Medicamento")+" · dose avulsa",s:"Tomou quando necessário",id:"prn:"+p.id});});
+  e.sort(function(a,b){return a.ts<b.ts?1:-1;});return e.slice(0,120);
+}
+var OCN={reacao:"Reação adversa",horario:"Mudei o horário",dobro:"Tomei em dobro"};
+function progList(){
+  var e=listEntries();
+  if(!e.length)return '<div class="empty">'+IC.info+'Os registros de medições, humor e ocorrências aparecem aqui.</div>';
+  return '<div>'+e.map(function(x){return '<div class="li"><div class="t"><b>'+esc(x.t)+'</b><small>'+fmtBR(x.ts.slice(0,10))+(x.ts.length>10&&x.ts.slice(11,16)!=="12:00"?" · "+x.ts.slice(11,16):"")+(x.s?" · "+esc(x.s):"")+'</small></div><button data-a="dele" data-v="'+esc(x.id)+'" aria-label="Apagar registro">'+IC.close+'</button></div>';}).join("")+'</div>';
+}
+
+/* ---- APOIO ---- */
+function viewApoio(){
+  function c(a,ic,t,s){return '<button class="opt" data-a="'+a+'">'+ic+'<span>'+t+'<small>'+s+'</small></span></button>';}
+  return c("chat",IC.chat,"Assistente de medicamentos","Tire dúvidas com inteligência artificial. Não substitui o médico nem o farmacêutico.")+
+   c("rx",IC.camera,"Ler receita pela foto","A receita vira uma lista de remédios para você conferir.")+
+   c("prof",IC.pro,"Para o profissional de saúde","Lista para checar interações no Drugs.com e bulário da Anvisa.")+
+   c("share",IC.doc,"Resumo para a consulta","Doses, medições e ocorrências do período.")+
+   '<div class="note bad" style="margin-top:14px">'+IC.alert+'<div class="nt"><b>Em emergência</b>Ligue 192 (SAMU). Suspeita de intoxicação: Disque-Intoxicação 0800 722 6001.</div></div>'+
+   '<p class="small" style="margin-top:8px">As informações deste aplicativo não substituem a orientação de médicos e farmacêuticos.</p>';
+}
+
+/* ---- TRATAMENTO ---- */
+function remInfo(){
+  if(!remItems().length)return null;
+  if(!isNative())return {web:true,done:0,total:1};
+  var s=[RT.notif==="granted",RT.exact==="granted"||RT.exact===null,!!S.alarmsOn],d=s.filter(Boolean).length;
+  return d===3?null:{web:false,done:d,total:3};
+}
+function remBanner(){
+  var r=remInfo();if(!r)return "";
+  return '<button class="note bad" style="width:100%;text-align:left;border:0" data-a="rem">'+IC.bell+'<div class="nt"><b>'+(r.web?"Seus lembretes não tocam aqui":"Seus lembretes podem não funcionar!")+'</b>'+(r.web?"Use o app instalado no Android ou envie os horários para o calendário. Toque para ver como.":"Ajuste as configurações do seu aparelho. Toque aqui.")+(r.web?"":'<div class="bar"><i style="width:'+Math.round(r.done*100/r.total)+'%"></i></div><span style="font-size:15px">'+r.done+' de '+r.total+' resolvido</span>')+'</div>'+IC.chev+'</button>';
+}
+function lastRec(k){var r=recsOf(k);return r.length?measDef(k).fmt(r[r.length-1]):null;}
+function viewTrat(){
+  var h=remBanner(),meds=S.meds,pl=S.plans;
+  h+='<div class="sect"><h2>Medicamentos</h2><button data-a="newmed" aria-label="Adicionar medicamento">'+IC.plus+'</button></div>';
+  if(!meds.length)h+='<button class="empty" data-a="newmed">'+IC.pill+'Nenhum adicionado ainda. Toque para começar.</button>';
+  meds.forEach(function(m){
+    h+='<button class="mcard" data-a="medv" data-id="'+esc(m.id)+'"><span class="rn">'+esc(m.name)+'</span><span class="rs">'+esc(schedText(m))+'</span><span class="rs">'+esc(medSub(m))+'</span>'+(m.stockOn?'<span><span class="chip'+(lowStock(m)?" warn":"")+'">'+esc(stockText(m))+'</span></span>':"")+'</button>';
+  });
+  h+='<div class="sect"><h2>Medições</h2><button data-a="newmeas" aria-label="Adicionar medição">'+IC.plus+'</button></div>';
+  var pm=pl.filter(function(p){return p.kind==="measure";});
+  if(!pm.length)h+='<button class="empty" data-a="newmeas">'+IC.heart+'Pressão, glicemia, peso e mais.</button>';
+  pm.forEach(function(p){var lr=lastRec(p.type);h+='<button class="mcard" data-a="planv" data-id="'+esc(p.id)+'"><span class="rn">'+esc(planName(p))+'</span><span class="rs">'+esc(schedText(p))+'</span>'+(lr?'<span class="rs">Último: '+esc(lr)+'</span>':"")+'</button>';});
+  h+='<div class="sect"><h2>Atividades</h2><button data-a="newact" aria-label="Adicionar atividade">'+IC.plus+'</button></div>';
+  var pa=pl.filter(function(p){return p.kind==="activity";});
+  if(!pa.length)h+='<button class="empty" data-a="newact">'+IC.run+'Beber água, caminhar, alongar.</button>';
+  pa.forEach(function(p){h+='<button class="mcard" data-a="planv" data-id="'+esc(p.id)+'"><span class="rn">'+esc(planName(p))+'</span><span class="rs">'+esc(schedText(p))+'</span></button>';});
+  h+='<div class="sect"><h2>Humor e sintomas</h2><button data-a="newmood" aria-label="Criar lembrete de humor">'+IC.plus+'</button></div>';
+  pl.filter(function(p){return p.kind==="mood";}).forEach(function(p){h+='<button class="mcard" data-a="planv" data-id="'+esc(p.id)+'"><span class="rn">Lembrete: como você está?</span><span class="rs">'+esc(schedText(p))+'</span></button>';});
+  h+='<button class="empty" data-a="mood" data-v="'+iso(today())+'">'+IC.smile+'Registrar como estou hoje.</button>';
+  h+='<div class="sect"><h2>Ocorrências</h2><button data-a="oc" aria-label="Registrar ocorrência">'+IC.plus+'</button></div><button class="empty" data-a="oc">'+IC.alert+'Reação adversa, horário diferente ou dose em dobro.</button>';
+  return h;
+}
+
+/* ===== fluxos: cadastro guiado, formulários, folhas ===== */
+var F=null,pickMode="rec",curK=null,wStep=0,wOpen=false,onbFlow=false;
+var MEDLIST=["Paracetamol","Dipirona","Ibuprofeno","Diclofenaco","Naproxeno","Nimesulida","Tramadol","Codeína","Gabapentina","Pregabalina","Ciclobenzaprina","Losartana","Enalapril","Captopril","Anlodipino","Atenolol","Propranolol","Metoprolol","Carvedilol","Hidroclorotiazida","Furosemida","Espironolactona","Sinvastatina","Atorvastatina","Rosuvastatina","Metformina","Glibenclamida","Gliclazida","Insulina NPH","Insulina regular","Levotiroxina","Omeprazol","Pantoprazol","Domperidona","Ondansetrona","Loratadina","Desloratadina","Cetirizina","Hidroxizina","Prednisona","Prednisolona","Dexametasona","Amoxicilina","Azitromicina","Cefalexina","Ciprofloxacino","Metronidazol","Fluconazol","Albendazol","Ivermectina","Sertralina","Fluoxetina","Escitalopram","Citalopram","Paroxetina","Venlafaxina","Desvenlafaxina","Amitriptilina","Nortriptilina","Bupropiona","Mirtazapina","Trazodona","Clonazepam","Diazepam","Alprazolam","Lorazepam","Zolpidem","Risperidona","Quetiapina","Olanzapina","Haloperidol","Aripiprazol","Clozapina","Carbonato de lítio","Carbamazepina","Lamotrigina","Topiramato","Ácido valproico","Fenitoína","Fenobarbital","Levodopa + Benserazida","Biperideno","Pramipexol","Donepezila","Memantina","Ácido fólico","Vitamina D","Vitamina B12","Sulfato ferroso","Cálcio","Ômega 3","Varfarina","Ácido acetilsalicílico (AAS)","Clopidogrel","Rivaroxabana","Alendronato","Tamsulosina","Finasterida","Sildenafila","Anticoncepcional oral","Salbutamol","Budesonida","Montelucaste"];
+
+var GEN_PURP=["Pressão alta","Diabetes","Colesterol","Depressão ou ansiedade","Dor ou inflamação","Infecção","Alergia","Tireoide","Contraceptivo","Sono","Outros","Eu não sei"];
+var PURPMAP={"biperideno":["Doença de Parkinson"],"losartana":["Pressão alta","Insuficiência cardíaca","Proteção dos rins"],"enalapril":["Pressão alta","Insuficiência cardíaca"],"captopril":["Pressão alta","Insuficiência cardíaca"],"anlodipino":["Pressão alta","Angina"],"atenolol":["Pressão alta","Arritmia","Prevenção de enxaqueca"],"propranolol":["Pressão alta","Prevenção de enxaqueca","Tremor","Ansiedade"],"metoprolol":["Pressão alta","Arritmia","Angina"],"carvedilol":["Pressão alta","Insuficiência cardíaca"],"hidroclorotiazida":["Pressão alta","Inchaço (edema)"],"furosemida":["Inchaço (edema)","Insuficiência cardíaca","Pressão alta"],"espironolactona":["Insuficiência cardíaca","Inchaço (edema)","Pressão alta"],"metformina":["Diabetes tipo 2","Síndrome dos ovários policísticos"],"glibenclamida":["Diabetes tipo 2"],"gliclazida":["Diabetes tipo 2"],"insulina":["Diabetes"],"sinvastatina":["Colesterol alto","Prevenção cardiovascular"],"atorvastatina":["Colesterol alto","Prevenção cardiovascular"],"rosuvastatina":["Colesterol alto","Prevenção cardiovascular"],"levotiroxina":["Hipotireoidismo"],"omeprazol":["Refluxo ou gastrite","Proteção do estômago","Úlcera"],"pantoprazol":["Refluxo ou gastrite","Proteção do estômago","Úlcera"],"fluoxetina":["Depressão","Ansiedade","TOC"],"sertralina":["Depressão","Ansiedade","Pânico","TOC"],"escitalopram":["Depressão","Ansiedade"],"amitriptilina":["Depressão","Dor crônica","Prevenção de enxaqueca","Sono"],"venlafaxina":["Depressão","Ansiedade"],"desvenlafaxina":["Depressão"],"bupropiona":["Depressão","Parar de fumar"],"clonazepam":["Ansiedade","Convulsões","Pânico","Sono"],"diazepam":["Ansiedade","Relaxante muscular","Convulsões"],"alprazolam":["Ansiedade","Pânico"],"zolpidem":["Insônia"],"carbamazepina":["Epilepsia","Dor neuropática","Transtorno bipolar"],"fenitoina":["Epilepsia"],"fenobarbital":["Epilepsia"],"valproato":["Epilepsia","Transtorno bipolar"],"lamotrigina":["Epilepsia","Transtorno bipolar"],"lítio":["Transtorno bipolar"],"haloperidol":["Esquizofrenia","Agitação"],"risperidona":["Esquizofrenia","Transtorno bipolar"],"quetiapina":["Esquizofrenia","Transtorno bipolar","Sono"],"olanzapina":["Esquizofrenia","Transtorno bipolar"],"levodopa":["Doença de Parkinson"],"pramipexol":["Doença de Parkinson","Síndrome das pernas inquietas"],"donepezila":["Doença de Alzheimer"],"memantina":["Doença de Alzheimer"],"paracetamol":["Dor","Febre"],"dipirona":["Dor","Febre"],"ibuprofeno":["Dor ou inflamação","Febre"],"diclofenaco":["Dor ou inflamação"],"naproxeno":["Dor ou inflamação"],"tramadol":["Dor forte"],"amoxicilina":["Infecção"],"azitromicina":["Infecção"],"cefalexina":["Infecção"],"ciprofloxacino":["Infecção"],"loratadina":["Alergia"],"desloratadina":["Alergia"],"cetirizina":["Alergia"],"prednisona":["Inflamação","Alergia","Doença autoimune"],"prednisolona":["Inflamação","Alergia"],"dexametasona":["Inflamação","Alergia"],"varfarina":["Evitar coágulos"],"rivaroxabana":["Evitar coágulos"],"clopidogrel":["Evitar coágulos","Prevenção de infarto/AVC"],"aas":["Prevenção de infarto/AVC","Dor"],"ácido acetilsalicílico":["Prevenção de infarto/AVC","Dor"],"ácido fólico":["Gestação","Anemia"],"sulfato ferroso":["Anemia"],"alendronato":["Osteoporose"],"cálcio":["Osteoporose","Suplemento"],"vitamina d":["Suplemento","Osteoporose"],"alopurinol":["Gota"],"colchicina":["Gota"],"sildenafila":["Disfunção erétil","Hipertensão pulmonar"],"tansulosina":["Próstata aumentada"],"finasterida":["Próstata aumentada","Queda de cabelo"],"anticoncepcional":["Contracepção"]};
+var FORMS={"biperideno":["comprimidos","frascos","injeções","solução"],"insulina":["canetas","frascos","injeções"],"loratadina":["comprimidos","solução"],"desloratadina":["comprimidos","solução"],"paracetamol":["comprimidos","gotas","solução"],"dipirona":["comprimidos","gotas","solução","injeções"],"ibuprofeno":["comprimidos","gotas","solução"],"amoxicilina":["cápsulas","comprimidos","suspensão"],"azitromicina":["comprimidos","suspensão"],"prednisolona":["comprimidos","solução"],"fenobarbital":["comprimidos","gotas"],"haloperidol":["comprimidos","gotas","injeções"],"risperidona":["comprimidos","solução"],"clonazepam":["comprimidos","gotas"],"omeprazol":["cápsulas","comprimidos"],"fluoxetina":["cápsulas","comprimidos"],"sertralina":["comprimidos"],"furosemida":["comprimidos","injeções"],"ciprofloxacino":["comprimidos","gotas"],"levotiroxina":["comprimidos"],"metformina":["comprimidos"],"losartana":["comprimidos"]};
+var FORMU={"comprimidos":"comprimido(s)","cápsulas":"cápsula(s)","gotas":"gota(s)","solução":"mL","suspensão":"mL","frascos":"mL","injeções":"aplicação(ões)","canetas":"unidade(s)"};
+function baseOf(name){var n=norm(name),best="";Object.keys(PURPMAP).concat(Object.keys(FORMS)).forEach(function(k){if(norm(k)&&n.indexOf(norm(k))===0&&k.length>best.length)best=k;});return best;}
+function purpList(name){var b=baseOf(name||"");return b&&PURPMAP[b]?PURPMAP[b].concat(["Outros","Eu não sei"]):GEN_PURP;}
+function formOf(name){var n=norm(name),k=Object.keys(FORMU).filter(function(f){return n.slice(-f.length)===norm(f);})[0];return k||"";}
+var PURPOSES=["Pressão alta","Diabetes","Colesterol","Depressão ou ansiedade","Dor ou inflamação","Infecção","Alergia","Tireoide","Contraceptivo","Sono","Outros","Não sei"];
+function defTimes(n){var m={1:["08:00"],2:["08:00","20:00"],3:["06:00","14:00","22:00"],4:["06:00","12:00","18:00","22:00"]};if(m[n])return m[n].slice();var a=[],s=Math.floor(16/n),i;for(i=0;i<n;i++)a.push(pad(7+i*s)+":00");return a;}
+function newW(){return {id:"",name:"",unit:UNITS[0],qty:"1",doseText:"",purpose:[],freq:"1",n:1,prn:false,times:["08:00"],days:[],start:iso(today()),dur:"",stockOn:false,stock:"",limit:"10"};}
+function optB(a,ic,t,s,extra){return '<button class="opt" data-a="'+a+'"'+(extra||"")+'>'+ic+'<span>'+t+(s?'<small>'+s+'</small>':"")+'</span></button>';}
+
+/* ---- peças de formulário ---- */
+function fDose(f){
+  return '<div class="fld"><label for="fqty">Quantidade por dose</label><div class="two"><input id="fqty" data-f="qty" inputmode="decimal" value="'+esc(f.qty)+'"><select id="funit" data-f="unit" aria-label="Unidade">'+UNITS.map(function(u){return '<option'+(u===f.unit?" selected":"")+'>'+esc(u)+'</option>';}).join("")+'</select></div></div>'+
+   '<div class="fld"><label for="fdt">Concentração ou observação (opcional)</label><input id="fdt" data-f="doseText" placeholder="ex.: 50 mg, em jejum" value="'+esc(f.doseText)+'"></div>';
+}
+function fTimes(f,edit){
+  var h='<div class="fld"><span class="lbl">Horários</span>';
+  f.times.forEach(function(t,i){
+    h+='<div class="rowflex" style="flex-wrap:nowrap;margin-bottom:8px"><input type="time" class="in" data-f="time" data-i="'+i+'" value="'+esc(t)+'" aria-label="Horário '+(i+1)+'">'+(edit&&f.times.length>1?'<button class="btn ghost sm" style="flex:0 0 auto" data-a="tdel" data-v="'+i+'" aria-label="Remover horário">'+IC.close+'</button>':"")+'</div>';
+  });
+  if(edit&&f.times.length<6)h+='<button class="btn sec sm" data-a="tadd">'+IC.plus+'Outro horário</button>';
+  return h+'</div>';
+}
+function fDays(f){
+  return '<div class="fld"><span class="lbl">Dias da semana <span class="small">(nenhum marcado = todos os dias)</span></span><div class="days">'+DAYS.map(function(d,i){return '<button type="button" class="'+(f.days.indexOf(i)>=0?"on":"")+'" data-a="dtog" data-v="'+i+'" aria-pressed="'+(f.days.indexOf(i)>=0)+'">'+d+'</button>';}).join("")+'</div></div>';
+}
+function fPeriod(f){
+  return '<div class="two"><div class="fld"><label for="fst">Início</label><input id="fst" type="date" data-f="start" value="'+esc(f.start)+'"></div><div class="fld"><label for="fdu">Duração (dias)</label><input id="fdu" data-f="dur" inputmode="numeric" placeholder="contínuo" value="'+esc(f.dur)+'"></div></div>';
+}
+function fStock(f){
+  return '<div class="sw"><span>Lembrar de repor o estoque</span><button type="button" role="switch" aria-checked="'+f.stockOn+'" class="'+(f.stockOn?"on":"")+'" data-a="swstock" aria-label="Lembrar de repor o estoque"></button></div>'+
+   (f.stockOn?'<div class="two"><div class="fld"><label for="fsk">Estoque atual</label><input id="fsk" data-f="stock" inputmode="decimal" value="'+esc(f.stock)+'" placeholder="ex.: 30"></div><div class="fld"><label for="flm">Avisar quando restar</label><input id="flm" data-f="limit" inputmode="decimal" value="'+esc(f.limit)+'"></div></div><p class="small">O estoque diminui sozinho cada vez que você marca uma dose como tomada.</p>':"");
+}
+function buildMed(f){
+  var n=f.prn?0:Math.max(1,f.times.length);
+  return fixMed({id:f.id||uid(),name:f.name.trim(),unit:f.unit,qty:num(f.qty)||1,doseText:f.doseText.trim(),purpose:f.purpose,times:f.prn?[]:f.times.slice(0,n),days:f.days.slice(),start:f.start,dur:parseInt(f.dur,10)||0,prn:f.prn,stockOn:f.stockOn,stock:num(f.stock)||0,limit:num(f.limit)||0});
+}
+
+/* ---- cadastro guiado de medicamento ---- */
+var WSTEPS=["name","purpose","freq","when","stock"];
+function wizStart(){F=newW();wStep=0;wOpen=true;wizRender();}
+function wizRender(){
+  var w=F,s=WSTEPS[wStep],pct=Math.round((wStep+1)*100/WSTEPS.length),body="",top="",foot="";
+  var back='<button class="icb" data-a="wback" aria-label="Voltar">'+IC.back+'</button>';
+  var skip=(s==="purpose"||s==="stock")?'<button class="lnk" data-a="wskip">Ignorar</button>':(s==="name"?'<button class="lnk" data-a="rx">'+IC.camera+' Ler receita</button>':"");
+  top='<div class="top">'+back+skip+'</div>';
+  var ctx=w.name&&s!=="name"?'<p class="ctx">'+esc(w.name)+'</p>':"";
+  if(s==="name"){
+    body='<h1>Qual medicamento você usa?</h1><div class="fld" style="margin-top:12px"><label for="wname">Nome do medicamento</label><input id="wname" data-f="name" autocomplete="off" placeholder="Digite para buscar" value="'+esc(w.name)+'"></div><div class="sug" id="wsug">'+sugHtml(w.name)+'</div>';
+    foot='<button class="btn" data-a="wnext"'+(w.name.trim()?"":" disabled")+' id="wnextb">Próximo</button>';
+  }else if(s==="purpose"){
+    body=ctx+'<h1>Para que você toma este medicamento?</h1><p class="lead">Várias respostas possíveis.</p>'+purpList(w.name).map(function(p,i){var on=w.purpose.indexOf(p)>=0;return '<button class="rad chk'+(on?" on":"")+'" data-a="wpurp" data-v="'+i+'" aria-pressed="'+on+'">'+p+'<span class="tick"></span></button>';}).join("");
+    foot='<button class="btn" data-a="wnext">Próximo</button>';
+  }else if(s==="freq"){
+    var fr=[["1","Uma vez ao dia"],["2","Duas vezes ao dia"],["3","Três vezes ao dia"],["prn","Quando necessário (nenhum lembrete)"],["custom","Preciso de mais opções…"]];
+    body=ctx+'<h1>Com que frequência você toma este medicamento?</h1><div style="margin-top:12px">'+fr.map(function(x){return '<button class="rad'+(w.freq===x[0]?" on":"")+'" data-a="wfreq" data-v="'+x[0]+'" aria-pressed="'+(w.freq===x[0])+'">'+x[1]+'<span class="tick"></span></button>';}).join("")+'</div>';
+    if(w.freq==="custom")body+='<div class="card" style="margin-top:6px"><div class="fld"><span class="lbl">Vezes por dia</span><div class="stepper"><button data-a="wn" data-v="-1" aria-label="Menos">−</button><b>'+w.n+'</b><button data-a="wn" data-v="1" aria-label="Mais">+</button></div></div>'+fDays(w)+'</div>';
+    foot='<button class="btn" data-a="wnext">Próximo</button>';
+  }else if(s==="when"){
+    body=ctx+'<h1>'+(w.prn?"Quando você começa?":"Quando você quer ser lembrado?")+'</h1><div style="margin-top:12px">'+(w.prn?"":fTimes(w,false))+fDose(w)+fPeriod(w)+'</div>';
+    foot='<button class="btn" data-a="wnext">Próximo</button>';
+  }else{
+    body=ctx+'<h1>Quer receber lembretes para repor o estoque?</h1><div style="margin-top:12px">'+fStock(w)+'</div>';
+    foot='<button class="btn" data-a="wsave">Salvar</button>';
+  }
+  openScr(top+'<div class="grow">'+body+'</div><div class="foot">'+foot+'<div class="steps"><i style="width:'+pct+'%"></i></div></div>',"wiz");
+  if(s==="name"){var el=$("#wname");if(el&&!w.name)setTimeout(function(){try{el.focus();}catch(e){}},50);}
+}
+function sugHtml(q){
+  var n=norm(q.trim()),h="";
+  if(!n)return '<p class="small">Escolha da lista ou digite o nome como está na caixa.</p>';
+  var a=MEDLIST.filter(function(m){return norm(m).indexOf(n)===0;}),b=MEDLIST.filter(function(m){var x=norm(m);return x.indexOf(n)>0;}),c=0;
+  h+='<p class="small" style="margin:6px 0"><button class="lnk" data-a="wpick" data-v="'+esc(q.trim())+'">Não encontrou? Toque aqui para usar “'+esc(q.trim())+'” como nome</button></p>';
+  a.concat(b).slice(0,6).forEach(function(m){
+    var fs=FORMS[norm(m)]||FORMS[m.toLowerCase()]||[];
+    if(!fs.length){h+='<button data-a="wpick" data-v="'+esc(m)+'">'+esc(m)+IC.chev+'</button>';return;}
+    fs.forEach(function(f){h+='<button data-a="wpick" data-v="'+esc(m+" "+f)+'">'+esc(m+" "+f)+IC.chev+'</button>';});
+  });
+  return h;
+}
+function sugUpdate(){var el=$("#wsug"),b=$("#wnextb");if(el)el.innerHTML=sugHtml(F.name);if(b)b.disabled=!F.name.trim();}
+function wizNext(){
+  var w=F,s=WSTEPS[wStep];
+  if(s==="name"&&!w.name.trim())return;
+  if(s==="freq"){
+    if(w.freq==="prn"){w.prn=true;w.times=[];}
+    else{w.prn=false;if(w.freq!=="custom")w.n=+w.freq;w.times=defTimes(w.n);}
+  }
+  wStep=Math.min(WSTEPS.length-1,wStep+1);wizRender();
+}
+function wizSave(){
+  var w=F;
+  if(w.stockOn&&num(w.stock)===null){toast("Informe o estoque atual ou desligue o lembrete.");return;}
+  var m=buildMed(w);S.meds.push(m);S.onboarded=S.onboarded||!onbFlow;save();wOpen=false;F=null;
+  var wasOnb=onbFlow&&!S.onboarded;
+  $("#scr").hidden=true;$("#scr").innerHTML="";scr=null;
+  tab="hoje";selDate=today();render();toast(m.name+" adicionado.");buzz();
+  if(wasOnb)onbShow();else if(!m.prn)setTimeout(function(){shortcutSheet(m.name);},350);
+}
+
+/* ---- editar medicamento (página única) ---- */
+function medEdit(id){
+  var m=findItem(id);if(!m)return;
+  F={id:m.id,name:m.name,unit:m.unit,qty:String(m.qty),doseText:m.doseText,purpose:m.purpose.slice(),freq:"custom",n:Math.max(1,m.times.length),prn:m.prn,times:m.times.length?m.times.slice():[""].slice(0,0),days:m.days.slice(),start:m.start||iso(today()),dur:m.dur?String(m.dur):"",stockOn:m.stockOn,stock:String(m.stock),limit:String(m.limit)};
+  if(!F.prn&&!F.times.length)F.times=["08:00"];
+  editRender();
+}
+function editRender(){
+  var w=F,h=topBar("Editar medicamento");
+  h+='<div class="grow"><div class="fld"><label for="fnm">Nome</label><input id="fnm" data-f="name" value="'+esc(w.name)+'"></div>'+fDose(w)+
+   '<div class="sw"><span>Só quando necessário</span><button type="button" role="switch" aria-checked="'+w.prn+'" class="'+(w.prn?"on":"")+'" data-a="swprn" aria-label="Só quando necessário"></button></div>'+
+   (w.prn?"":fTimes(w,true)+fDays(w))+fPeriod(w)+'<div class="sep"></div>'+fStock(w)+'</div>'+
+   '<div class="foot"><button class="btn" data-a="esave">Salvar alterações</button><button class="btn badl" data-a="mdel" data-id="'+esc(w.id)+'">Remover medicamento</button></div>';
+  openScr(h,"edit");
+}
+function editSave(){
+  var w=F;if(!w.name.trim()){toast("Informe o nome do medicamento.");return;}
+  if(w.stockOn&&num(w.stock)===null){toast("Informe o estoque atual ou desligue o lembrete.");return;}
+  var m=buildMed(w);
+  S.meds=S.meds.map(function(x){return x.id===m.id?m:x;});save();F=null;closeScr();toast("Alterações salvas.");
+}
+function removeMed(id){
+  var m=findItem(id);if(!m)return;
+  confirmBox("Remover "+m.name+"?","O remédio sai do calendário e das listas. As marcações e ocorrências dele também serão apagadas. Não dá para desfazer.","Sim, remover",function(){
+    S.meds=S.meds.filter(function(x){return x.id!==id;});
+    Object.keys(S.checks).forEach(function(k){if(k.split("|")[1]===id)delete S.checks[k];});
+    S.logs=S.logs.filter(function(l){return l.med!==id;});S.prn=S.prn.filter(function(p){return p.med!==id;});
+    save();F=null;closeSheet();$("#scr").hidden=true;$("#scr").innerHTML="";scr=null;render();toast("Medicamento removido.");
+  });
+}
+
+/* ---- lembretes de medição, atividade e humor ---- */
+function planNew(kind,type,name){F={id:"",kind:kind,type:type||"",name:name||"",times:[kind==="mood"?"21:00":"09:00"],days:[],start:iso(today()),dur:""};planRender();}
+function planEdit(id){var p=findItem(id);if(!p)return;F={id:p.id,kind:p.kind,type:p.type,name:p.name,times:p.times.length?p.times.slice():["09:00"],days:p.days.slice(),start:p.start||iso(today()),dur:p.dur?String(p.dur):""};planRender();}
+function planRender(){
+  var p=F,ttl=p.type==="consulta"?"Consulta médica":p.kind==="measure"?"Lembrete: "+measDef(p.type).name:p.kind==="mood"?"Lembrete de humor":"Atividade",h=topBar(ttl);
+  h+='<div class="grow">';
+  if(p.type==="consulta"){
+    h+='<div class="fld"><label for="pnm">Com quem / especialidade</label><input id="pnm" data-f="name" placeholder="ex.: Cardiologista, Dra. Maria" value="'+esc(p.name)+'"></div><div class="fld"><label for="fst">Data da consulta</label><input id="fst" type="date" data-f="start" value="'+esc(p.start)+'"></div>'+fTimes(p,false);
+    h+='</div><div class="foot"><button class="btn" data-a="psave">Salvar</button>'+(p.id?'<button class="btn badl" data-a="pdel" data-id="'+esc(p.id)+'">Remover</button>':"")+'</div>';
+    openScr(h,"plan");return;
+  }
+  if(p.kind==="activity"){
+    h+='<div class="fld"><label for="pnm">Atividade</label><input id="pnm" data-f="name" placeholder="ex.: Caminhar 20 minutos" value="'+esc(p.name)+'"></div><div class="days" style="margin-bottom:14px">'+ACTS.map(function(a){return '<button type="button" class="'+(p.name===a?"on":"")+'" data-a="apick" data-v="'+esc(a)+'">'+a+'</button>';}).join("")+'</div>';
+  }
+  h+=fTimes(p,true)+fDays(p)+fPeriod(p)+'</div><div class="foot"><button class="btn" data-a="psave">Salvar</button>'+(p.id?'<button class="btn badl" data-a="pdel" data-id="'+esc(p.id)+'">Remover</button>':"")+'</div>';
+  openScr(h,"plan");
+}
+function planSave(){
+  var p=F;if(p.kind==="activity"&&!p.name.trim()){toast("Informe o nome da atividade.");return;}
+  if(p.type==="consulta"){if(!p.start){toast("Informe a data da consulta.");return;}p.days=[];p.dur=1;}
+  var o=fixPlan({id:p.id||uid(),kind:p.kind,type:p.type,name:p.name.trim(),times:p.times.filter(Boolean),days:p.days,start:p.start,dur:parseInt(p.dur,10)||0});
+  if(p.id)S.plans=S.plans.map(function(x){return x.id===o.id?o:x;});else S.plans.push(o);
+  S.onboarded=S.onboarded||!onbFlow;save();F=null;closeScr();toast("Lembrete salvo.");
+}
+function planRemove(id){
+  var p=findItem(id);if(!p)return;
+  confirmBox("Remover este lembrete?","As marcações dele também serão apagadas. Os valores já registrados no Progresso continuam.","Sim, remover",function(){
+    S.plans=S.plans.filter(function(x){return x.id!==id;});
+    Object.keys(S.checks).forEach(function(k){if(k.split("|")[1]===id)delete S.checks[k];});
+    save();closeSheet();$("#scr").hidden=true;$("#scr").innerHTML="";scr=null;render();toast("Lembrete removido.");
+  });
+}
+
+/* ---- folhas ---- */
+function addMenu(){
+  openSheet('<h3>Adicionar</h3><p class="sub">O que você quer registrar?</p>'+optB("newmed",IC.pill,"Medicamento","Com lembretes e controle de estoque")+optB("rx",IC.camera,"Ler receita pela foto","A IA preenche os remédios para você conferir")+optB("meas",IC.heart,"Medição","Pressão, glicemia, peso e mais")+optB("newact",IC.run,"Atividade","Beber água, caminhar, alongar")+optB("mood",IC.smile,"Humor e sintomas","Como você está hoje",' data-v="'+iso(today())+'"')+optB("newapt",IC.doc,"Consulta médica","Lembrete de data e hora")+optB("oc",IC.alert,"Ocorrência com medicamento","Reação adversa, horário diferente ou dose em dobro"));
+}
+function slotSheet(k){
+  var s=slotByKey(k);if(!s)return;curK=k;
+  var v=st(k),fut=pd(s.date)>today(),h='<h3>'+esc(slotName(s))+'</h3><p class="sub">'+esc(slotSub(s))+(s.time?" · "+s.time:"")+" · "+fmtBR(s.date)+'</p>';
+  if(!fut){
+    if(s.kind==="med"){h+=optB("sl-take",IC.check,v===1?"Desmarcar (já tomei)":"Tomei","")+optB("sl-skip",IC.minus,v===2?"Desfazer pulo":"Pular esta dose","");}
+    else if(s.kind==="activity")h+=optB("sl-take",IC.check,v===1?"Desmarcar":"Feito","");
+    else if(s.kind==="measure")h+=optB("sl-meas",IC.heart,"Registrar medição","");
+    else h+=optB("sl-mood",IC.smile,"Registrar humor","");
+  }
+  h+=s.kind==="med"?optB("medv",IC.pill,"Ver medicamento","",' data-id="'+esc(s.it.id)+'"')+(fut?"":optB("oc",IC.alert,"Registrar ocorrência","",' data-id="'+esc(s.it.id)+'"')):optB("planv",IC.bell,"Ver lembrete","",' data-id="'+esc(s.it.id)+'"');
+  openSheet(h);
+}
+function medSheet(id){
+  var m=findItem(id);if(!m)return;
+  var h='<h3>'+esc(m.name)+'</h3><p class="sub">'+esc(schedText(m))+'<br>'+esc(medSub(m))+'</p>';
+  if(m.stockOn)h+='<p style="margin-bottom:12px"><span class="chip'+(lowStock(m)?" warn":"")+'">'+esc(stockText(m))+'</span></p>';
+  h+=optB("medit",IC.sliders,"Editar","",' data-id="'+esc(id)+'"')+(m.stockOn?optB("refill",IC.plus,"Reabastecer estoque","",' data-id="'+esc(id)+'"'):"")+optB("oc",IC.alert,"Registrar ocorrência","",' data-id="'+esc(id)+'"')+'<button class="btn badl" style="margin-top:6px" data-a="mdel" data-id="'+esc(id)+'">Remover medicamento</button>';
+  openSheet(h);
+}
+function planSheet(id){
+  var p=findItem(id);if(!p)return;
+  var h='<h3>'+esc(planName(p))+'</h3><p class="sub">'+esc(schedText(p))+'</p>';
+  if(p.kind==="measure")h+=optB("meas",IC.heart,"Registrar medição agora","",' data-v="'+esc(p.type)+'"');
+  if(p.kind==="mood")h+=optB("mood",IC.smile,"Registrar humor agora","",' data-v="'+iso(today())+'"');
+  h+=optB("pedit",IC.sliders,"Editar lembrete","",' data-id="'+esc(id)+'"')+'<button class="btn badl" style="margin-top:6px" data-a="pdel" data-id="'+esc(id)+'">Remover lembrete</button>';
+  openSheet(h);
+}
+function refillSheet(id){
+  var m=findItem(id);if(!m)return;
+  openSheet('<h3>Reabastecer '+esc(m.name)+'</h3><p class="sub">Estoque atual: '+esc(stockText(m))+'</p><div class="fld"><label for="rfq">Quantas unidades você recebeu?</label><input id="rfq" inputmode="decimal" placeholder="ex.: 30"></div><button class="btn" data-a="rfsave" data-id="'+esc(id)+'">Somar ao estoque</button>');
+  setTimeout(function(){var e=$("#rfq");if(e)e.focus();},60);
+}
+function measPicker(mode){
+  pickMode=mode;
+  openSheet('<h3>'+(mode==="rec"?"Qual medição?":"Lembrete de qual medição?")+'</h3><p class="sub">'+(mode==="rec"?"Escolha o que vai registrar agora.":"Você será avisado nos horários escolhidos.")+'</p>'+MEAS.map(function(m){return optB("mpick",IC.heart,m.name,m.f.map(function(f){return f.u;}).filter(function(u,i,a){return a.indexOf(u)===i;}).join(" / "),' data-v="'+m.k+'"');}).join(""));
+}
+function nowParts(){var n=new Date();return {d:iso(n),t:pad(n.getHours())+":"+pad(n.getMinutes())};}
+function measSheet(k,slotKey){
+  var md=measDef(k),np=nowParts();curK=slotKey||null;
+  openSheet('<h3>'+md.name+'</h3><div style="margin-top:12px">'+md.f.map(function(f){return '<div class="fld"><label for="mv_'+f.id+'">'+f.label+' ('+f.u+')</label><input id="mv_'+f.id+'" inputmode="decimal" autocomplete="off"></div>';}).join("")+'<div class="two"><div class="fld"><label for="mdt">Data</label><input id="mdt" type="date" value="'+np.d+'"></div><div class="fld"><label for="mtm">Hora</label><input id="mtm" type="time" value="'+np.t+'"></div></div><div class="fld"><label for="mnt">Observação (opcional)</label><input id="mnt" maxlength="120"></div></div><button class="btn" data-a="msave" data-v="'+k+'">Salvar medição</button>');
+  setTimeout(function(){var e=$("#mv_v");if(e)e.focus();},60);
+}
+function measSave(k){
+  var md=measDef(k),r={id:uid(),k:k,ts:($("#mdt").value||nowParts().d)+"T"+($("#mtm").value||nowParts().t),note:$("#mnt").value.trim()},ok=true;
+  md.f.forEach(function(f){var v=num($("#mv_"+f.id).value);if(v===null||v<=0)ok=false;r[f.id]=v;});
+  if(!ok){toast("Preencha o valor da medição.");return;}
+  S.records.push(r);
+  if(curK){var sl=slotByKey(curK);if(sl&&st(curK)!==1)setStatus(sl,1);}
+  curK=null;save();closeSheet();render();toast(md.name+" registrada.");buzz();
+}
+var moodSel=0,moodSym=[];
+function moodSheet(ds,slotKey){
+  var cur=S.moods[ds];moodSel=cur?cur.m:0;moodSym=cur&&cur.sym?cur.sym.slice():[];curK=slotKey||null;
+  var h='<h3>Como você está?</h3><p class="sub">'+(ds===iso(today())?"Hoje":fmtBR(ds))+'</p><div class="moods">';
+  for(var i=1;i<=5;i++)h+='<button data-a="mset" data-v="'+i+'" class="'+(moodSel===i?"on":"")+'" aria-pressed="'+(moodSel===i)+'">'+face(i)+MOODN[i]+'</button>';
+  h+='</div><span class="lbl">Sintomas (opcional)</span><div class="days" style="margin:8px 0 14px">'+SYMS.map(function(s,j){return '<button type="button" data-a="msym" data-v="'+j+'" class="'+(moodSym.indexOf(s)>=0?"on":"")+'">'+s+'</button>';}).join("")+'</div><div class="fld"><label for="mdn">Observação (opcional)</label><input id="mdn" maxlength="160" value="'+esc(cur?cur.note||"":"")+'"></div><button class="btn" data-a="mdsave" data-v="'+ds+'">Salvar</button>';
+  openSheet(h);
+}
+function ocSheet(medId,date){
+  if(!S.meds.length){toast("Cadastre um medicamento primeiro.");return;}
+  var np=nowParts();
+  openSheet('<h3>Registrar ocorrência</h3><p class="sub">Anote para lembrar e mostrar ao profissional.</p><div class="fld"><label for="ocm">Medicamento</label><select id="ocm">'+S.meds.map(function(m){return '<option value="'+esc(m.id)+'"'+(m.id===medId?" selected":"")+'>'+esc(m.name)+'</option>';}).join("")+'</select></div><div class="fld"><label for="ocd">Data</label><input id="ocd" type="date" value="'+(date||np.d)+'"></div><span class="lbl">O que aconteceu?</span><div class="days" style="margin:8px 0 14px" id="oct"><button type="button" data-a="octg" data-v="reacao">Reação adversa</button><button type="button" data-a="octg" data-v="horario">Mudei o horário</button><button type="button" data-a="octg" data-v="dobro">Tomei em dobro</button></div><div class="fld"><label for="ocn">Detalhes (opcional)</label><textarea id="ocn" maxlength="500" placeholder="Sintoma, horário em que tomou, novo horário…"></textarea></div><button class="btn" data-a="ocsave">Salvar ocorrência</button>');
+}
+function goalSheet(){
+  openSheet('<h3>Meta de peso</h3><div class="fld" style="margin-top:12px"><label for="gl">Peso desejado (kg)</label><input id="gl" inputmode="decimal" value="'+(S.goals.peso?String(S.goals.peso).replace(".",","):"")+'"></div><button class="btn" data-a="glsave">Salvar meta</button>');
+}
+
+/* ---- boas-vindas ---- */
+function onbShow(){
+  onbFlow=true;
+  if(!S.name&&!onbShow.named){
+    openScr('<div class="grow" style="display:flex;flex-direction:column;justify-content:center;gap:14px"><h1>Bem-vindo(a)!</h1><p class="lead">Vamos montar seu tratamento em poucos passos.</p><div class="fld"><label for="onm">Como você gostaria de ser chamado(a)?</label><input id="onm" maxlength="30" autocomplete="given-name" placeholder="Seu nome"></div></div><div class="foot"><button class="btn" data-a="onb1">Continuar</button></div>',"onb");
+    return;
+  }
+  var nm=S.meds.length,np=S.plans.filter(function(p){return p.kind==="measure";}).length,na=S.plans.filter(function(p){return p.kind==="activity";}).length,nd=S.plans.filter(function(p){return p.kind==="mood";}).length;
+  function card(a,ic,t,s,n){return '<button class="opt" data-a="'+a+'">'+ic+'<span>'+t+'<small>'+s+'</small></span>'+(n?'<span class="chip">'+n+'</span>':IC.plus)+'</button>';}
+  openScr('<div class="grow"><h1 style="margin-top:30px">Vamos estabelecer sua rotina!</h1><p class="lead">Comece pelos remédios. O resto pode ficar para depois.</p>'+card("newmed",IC.pill,"Medicamentos","Receba lembretes e acompanhe cada dose",nm)+card("rx",IC.camera,"Ler receita pela foto","Preenchimento automático por IA","")+card("newmeas",IC.heart,"Medições","Lembretes para pressão, glicemia, peso",np)+card("newact",IC.run,"Atividades","Beber água, caminhar, alongar",na)+card("newmood",IC.smile,"Humor e sintomas","Lembrete para registrar como você está",nd)+'</div><div class="foot"><button class="btn" data-a="onbdone">Tudo pronto!</button></div>',"onb");
+}
+
+/* ===== IA, receita, assistente, resumo, lembretes, configurações ===== */
+var CHAT_INSTR="Você é um assistente de informação sobre medicamentos dentro de um aplicativo de lembretes. Responda em português do Brasil, em linguagem simples, com no máximo 6 frases. Dê informação geral e educativa. Não faça diagnóstico, não prescreva e não mande mudar, parar ou dobrar doses: nesses casos diga para falar com o médico ou farmacêutico. Para dose esquecida, explique que depende do medicamento e oriente consultar a bula ou o farmacêutico. Se houver sinais de emergência (falta de ar, inchaço no rosto, desmaio, dor forte no peito, convulsão, suspeita de intoxicação), oriente ligar 192 (SAMU) ou procurar um pronto atendimento. Se não tiver certeza, diga que não sabe. Você é uma IA: lembre isso quando falar de segurança.";
+var RX_PROMPT='Leia esta receita médica e extraia os medicamentos. Responda SOMENTE JSON no formato {"meds":[{"name":"nome do medicamento","doseText":"concentração e posologia como está escrito, ex.: 50 mg, 1 comprimido de 8 em 8 horas","qty":1,"unit":"comprimido(s)","times_per_day":1,"days_of_week":[],"duration_days":0}]}. unit deve ser um destes: comprimido(s), cápsula(s), gota(s), mL, aplicação(ões), sachê(s), dose(s), unidade(s). days_of_week usa 0=domingo a 6=sábado e [] significa todos os dias. duration_days é 0 se o uso for contínuo ou não informado. Não invente nada que não esteja legível na receita.';
+function aiErr(e){
+  var c=e&&e.code;
+  return c==="not_granted"?"Você não permitiu o envio ao Claude. Recarregue a página e aceite para usar este recurso."
+   :c==="rate_limited"?"Muitas tentativas seguidas. Aguarde um minuto."
+   :(c==="images_unavailable"||c==="unavailable")?"Este recurso não está disponível neste ambiente."
+   :"Não consegui concluir. Tente de novo.";
+}
+async function aiSample(){if(!window.claude)return null;try{return await claude.use("sample");}catch(e){return null;}}
+function toB64(b){return new Promise(function(ok,no){var fr=new FileReader();fr.onload=function(){ok(String(fr.result).split(",")[1]);};fr.onerror=no;fr.readAsDataURL(b);});}
+async function shrink(f){
+  try{
+    var bm=await createImageBitmap(f),k=Math.min(1,1600/Math.max(bm.width,bm.height)),c=document.createElement("canvas");
+    c.width=Math.round(bm.width*k);c.height=Math.round(bm.height*k);c.getContext("2d").drawImage(bm,0,0,c.width,c.height);
+    var bl=await new Promise(function(ok){c.toBlob(ok,"image/jpeg",0.85);});return bl||f;
+  }catch(e){return f;}
+}
+async function aiJson(prompt,blob){
+  var s=await aiSample();
+  if(s){var lim=await s.limits().catch(function(){return null;});if(!lim||!lim.images)throw {code:"images_unavailable"};return await s.json(prompt,{images:[blob],cache:false});}
+  if(window.API_URL){var r=await fetch(window.API_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({image:await toB64(blob),media_type:blob.type||"image/jpeg"})});if(!r.ok)throw {code:"http"};return await r.json();}
+  throw {code:"unavailable"};
+}
+async function aiChat(turns,ctx){
+  var s=await aiSample(),last=turns.length-1;
+  if(s){var arr=turns.map(function(t,i){return {role:t.role,content:i===last?CHAT_INSTR+(ctx?"\n\n"+ctx:"")+"\n\nMensagem da pessoa: "+t.content:t.content};});var r=await s(arr,{cache:false});return r.text;}
+  if(window.API_URL){var x=await fetch(window.API_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({messages:turns,context:ctx||""})});if(!x.ok)throw {code:"http"};var j=await x.json();return j.text;}
+  throw {code:"unavailable"};
+}
+
+/* ---- ler receita ---- */
+var pend=[];
+function rxScreen(){
+  pend=[];
+  openScr(topBar("Ler receita")+'<div class="grow"><p class="lead">Envie uma foto nítida da receita. A IA sugere os medicamentos e você confere antes de adicionar.</p><div class="rowflex"><label class="btn" for="rxc">'+IC.camera+'Tirar foto</label><label class="btn sec" for="rx">Escolher da galeria</label></div><input type="file" accept="image/*" capture="environment" id="rxc" class="vh"><input type="file" accept="image/*" id="rx" class="vh"><p class="small" id="rxs" role="status" style="margin-top:14px"></p><div id="pend"></div><p class="small" style="margin-top:16px">A foto é enviada ao Claude só para esta leitura. A leitura pode errar: confira nomes, doses e duração com a receita.</p></div>',"rx");
+}
+async function readRx(inp){
+  var f=inp.files[0],st2=$("#rxs");if(!f||!st2)return;
+  st2.textContent="Preparando a foto…";
+  try{
+    var im=await shrink(f);st2.textContent="Lendo a receita… pode levar até 1 minuto.";
+    var res=await aiJson(RX_PROMPT,im),list=(res&&res.meds)||[],td=iso(today());
+    pend=[];
+    list.forEach(function(x){
+      if(!x||!x.name)return;
+      var n=Math.min(6,Math.max(1,parseInt(x.times_per_day,10)||1)),dy=(x.days_of_week||[]).filter(function(v){return v>=0&&v<=6;});
+      pend.push(fixMed({id:uid(),name:String(x.name),unit:UNITS.indexOf(x.unit)>=0?x.unit:"dose(s)",qty:num(x.qty)||1,doseText:String(x.doseText||x.dose||""),times:defTimes(n),days:dy.length===7?[]:dy,start:td,dur:parseInt(x.duration_days,10)||0}));
+    });
+    st2.textContent=pend.length?"":"Não encontrei medicamentos legíveis. Tente uma foto mais nítida.";
+    pendPaint();
+  }catch(e){var e2=$("#rxs");if(e2)e2.textContent=aiErr(e);}
+  inp.value="";
+}
+function pendPaint(){
+  var el=$("#pend");if(!el)return;
+  if(!pend.length){el.innerHTML="";return;}
+  el.innerHTML='<p class="lbl" style="margin-bottom:8px">Confira com a receita e escolha o que adicionar:</p>'+pend.map(function(m,i){return '<button class="rad chk on" data-a="rxtog" data-v="'+i+'" aria-pressed="true"><span style="min-width:0"><b>'+esc(m.name)+'</b><br><span class="small" style="font-weight:400">'+esc(medSub(m))+' · '+esc(schedText(m))+'</span></span><span class="tick"></span></button>';}).join("")+'<div class="stack" style="margin-top:6px"><button class="btn" data-a="rxadd">Adicionar selecionados</button><button class="btn ghost" data-a="rxno">Descartar</button></div>';
+}
+
+/* ---- assistente ---- */
+var chat=[],chatCtx=false,chatBusy=false;
+function chatScreen(){
+  var sug=["Posso tomar este remédio com café?","O que fazer se esqueci uma dose?","Como guardar insulina?"];
+  openScr(topBar("Assistente")+'<div class="grow"><div class="note info">'+IC.info+'<div class="nt">Sou uma inteligência artificial e posso errar. Dou informações gerais. Não substituo médico nem farmacêutico.</div></div><div class="sw"><span>Incluir minha lista de remédios</span><button type="button" role="switch" aria-checked="'+chatCtx+'" class="'+(chatCtx?"on":"")+'" data-a="chatctx" aria-label="Incluir minha lista de remédios"></button></div><p class="small" style="margin-bottom:12px">'+(chatCtx?"Os nomes e doses dos seus remédios serão enviados ao Claude junto com cada pergunta.":"Desligado: só o texto que você digitar é enviado.")+'</p><div class="sugs" id="csug">'+sug.map(function(s){return '<button data-a="csug" data-v="'+esc(s)+'">'+esc(s)+'</button>';}).join("")+'</div><div class="chat" id="cmsgs" aria-live="polite"></div></div><div class="foot"><div class="send"><input id="cin" maxlength="500" placeholder="Escreva sua dúvida" autocomplete="off" aria-label="Sua dúvida"><button data-a="csend" aria-label="Enviar">'+IC.send+'</button></div></div>',"chat");
+  chatPaint();
+}
+function chatPaint(){
+  var el=$("#cmsgs");if(!el)return;
+  el.innerHTML=chat.map(function(m){return '<div class="msg '+(m.role==="user"?"u":"a")+'">'+esc(m.content)+'</div>';}).join("")+(chatBusy?'<div class="msg a">Pensando…</div>':"");
+  var sg=$("#csug");if(sg)sg.hidden=chat.length>0;
+  var s=$("#scr");if(s)s.scrollTop=s.scrollHeight;
+}
+async function chatSend(text){
+  text=String(text||"").trim();if(!text||chatBusy)return;
+  chat.push({role:"user",content:text});chatBusy=true;chatPaint();var inp=$("#cin");if(inp)inp.value="";
+  var ctx=chatCtx&&S.meds.length?"Medicamentos em uso da pessoa: "+S.meds.map(function(m){return m.name+" ("+medSub(m)+", "+schedText(m)+")";}).join("; ")+".":"";
+  try{var a=await aiChat(chat.slice(-8),ctx);chat.push({role:"assistant",content:String(a||"").trim()||"Não consegui responder agora."});}
+  catch(e){chat.push({role:"assistant",content:aiErr(e)});}
+  chatBusy=false;chatPaint();
+}
+
+/* ---- resumo para consulta ---- */
+var repP="mes";
+function repRange(){
+  var t=today(),f,to=t;
+  if(repP==="mes")f=new Date(t.getFullYear(),t.getMonth(),1);
+  else if(repP==="ant"){f=new Date(t.getFullYear(),t.getMonth()-1,1);to=new Date(t.getFullYear(),t.getMonth(),0);}
+  else f=addD(t,-29);
+  return {f:f,t:to};
+}
+function buildReport(){
+  var r=repRange(),t=today(),H="",T=[],per=fmtBR(iso(r.f))+" a "+fmtBR(iso(r.t));
+  T.push("RESUMO DE USO DE MEDICAMENTOS");if(S.name)T.push("Paciente: "+S.name);T.push("Período: "+per+" | Gerado em "+fmtBR(iso(t)),"");
+  H+='<p class="small">'+(S.name?'Paciente: <b>'+esc(S.name)+'</b> · ':"")+'Período: <b>'+per+'</b></p>';
+  H+='<h3>Medicamentos</h3>';T.push("MEDICAMENTOS");
+  var rows=[];
+  S.meds.forEach(function(m){
+    var exp=0,tk=0,sk=0,d=new Date(r.f.getTime());
+    if(!m.prn){while(d<=r.t){if(d<=t&&dueOn(m,d)){(m.times.length?m.times:[""]).forEach(function(tm){exp++;var v=st(iso(d)+"|"+m.id+"|"+tm);if(v===1)tk++;else if(v===2)sk++;});}d=addD(d,1);}}
+    var pr=S.prn.filter(function(p){return p.med===m.id&&p.ts.slice(0,10)>=iso(r.f)&&p.ts.slice(0,10)<=iso(r.t);}).length;
+    rows.push({m:m,exp:exp,tk:tk,sk:sk,pr:pr});
+  });
+  if(!rows.length){H+='<p>Nenhum medicamento cadastrado.</p>';T.push("Nenhum medicamento cadastrado.");}
+  else{
+    H+='<div class="tw"><table><tr><th>Medicamento</th><th>Posologia</th><th>Doses</th></tr>';
+    rows.forEach(function(x){
+      var dose=x.m.prn?(x.pr+" uso(s) avulso(s)"):(x.exp?x.tk+" de "+x.exp+" ("+Math.round(x.tk*100/x.exp)+"%)"+(x.sk?", "+x.sk+" pulada(s)":""):"sem doses previstas");
+      H+='<tr><td>'+esc(x.m.name)+'</td><td>'+esc(medSub(x.m))+'<br>'+esc(schedText(x.m))+'</td><td>'+esc(dose)+'</td></tr>';
+      T.push("- "+x.m.name+" | "+medSub(x.m)+" | "+schedText(x.m)+" | "+dose);
+    });
+    H+='</table></div>';
+  }
+  var inr=function(d){return d>=iso(r.f)&&d<=iso(r.t);};
+  var L=S.logs.filter(function(l){return inr(l.date);}).sort(function(a,b){return a.date<b.date?-1:1;});
+  H+='<h3>Ocorrências informadas pelo paciente</h3>';T.push("","OCORRÊNCIAS");
+  if(!L.length){H+='<p>Nenhuma no período.</p>';T.push("Nenhuma no período.");}
+  else{H+='<div class="tw"><table><tr><th>Data</th><th>Medicamento</th><th>Tipo</th><th>Detalhes</th></tr>';
+    L.forEach(function(l){var it=findItem(l.med),tp=(l.types||[]).map(function(x){return OCN[x]||x;}).join(", ");H+='<tr><td>'+fmtBR(l.date)+'</td><td>'+esc(it?it.name:"-")+'</td><td>'+esc(tp)+'</td><td>'+esc(l.note||"-")+'</td></tr>';T.push("- "+fmtBR(l.date)+" | "+(it?it.name:"-")+" | "+tp+(l.note?" | "+l.note:""));});
+    H+='</table></div>';}
+  H+='<h3>Medições</h3>';T.push("","MEDIÇÕES");var any=false;
+  MEAS.forEach(function(md){
+    var rs=recsOf(md.k).filter(function(x){return inr(x.ts.slice(0,10));});if(!rs.length)return;any=true;
+    var vs=rs.map(function(x){return x.v;}),mn=Math.min.apply(null,vs),mx=Math.max.apply(null,vs),ls=rs[rs.length-1];
+    var tx=rs.length+" registro(s). Último: "+md.fmt(ls)+" em "+fmtBR(ls.ts.slice(0,10))+". "+(md.k==="pa"?"Sistólica de "+mn+" a "+mx+".":"Variação de "+String(mn).replace(".",",")+" a "+String(mx).replace(".",",")+".");
+    H+='<p><b>'+md.name+':</b> '+esc(tx)+'</p>';T.push("- "+md.name+": "+tx);
+  });
+  if(!any){H+='<p>Nenhuma no período.</p>';T.push("Nenhuma no período.");}
+  var mk=Object.keys(S.moods).filter(inr).sort();
+  H+='<h3>Humor e sintomas</h3>';T.push("","HUMOR E SINTOMAS");
+  if(!mk.length){H+='<p>Nenhum registro no período.</p>';T.push("Nenhum registro no período.");}
+  else{
+    var avg=mk.reduce(function(a,k){return a+S.moods[k].m;},0)/mk.length,cnt={};
+    mk.forEach(function(k){(S.moods[k].sym||[]).forEach(function(s){cnt[s]=(cnt[s]||0)+1;});});
+    var sy=Object.keys(cnt).sort(function(a,b){return cnt[b]-cnt[a];}).map(function(s){return s+" ("+cnt[s]+"x)";}).join(", ");
+    var tx2=mk.length+" dia(s) registrado(s). Humor médio: "+String(r2(avg)).replace(".",",")+" de 5."+(sy?" Sintomas: "+sy+".":"");
+    H+='<p>'+esc(tx2)+'</p>';T.push(tx2);
+  }
+  var un=[],seen={};S.meds.forEach(function(m){var k=norm(m.name);if(!seen[k]){seen[k]=1;un.push(m.name);}});
+  H+='<h3>Lista para conferir interações</h3><p>'+esc(un.join(", ")||"-")+'</p>';T.push("","LISTA PARA CONFERIR INTERAÇÕES",un.join(", "));
+  H+='<p class="small" style="margin-top:14px">Dados informados pelo próprio paciente, sem validação clínica. Não substitui a avaliação do médico ou do farmacêutico. Aplicativo idealizado por Farmacêutica Dra. Ana Paula de Andrade Barbosa.</p>';
+  T.push("","Dados informados pelo próprio paciente. Não substitui a avaliação profissional.");
+  return {html:H,text:T.join("\n")};
+}
+function repScreen(){
+  var r=buildReport();
+  openScr(topBar("Resumo para a consulta")+'<div class="grow"><div class="days" style="margin-bottom:12px">'+[["mes","Este mês"],["ant","Mês passado"],["30","Últimos 30 dias"]].map(function(p){return '<button type="button" class="'+(repP===p[0]?"on":"")+'" data-a="rperiod" data-v="'+p[0]+'">'+p[1]+'</button>';}).join("")+'</div><div class="rep card">'+r.html+'</div></div><div class="foot"><button class="btn" data-a="rcopy">Copiar texto</button><button class="btn sec" data-a="rsave">Salvar arquivo de texto</button><p class="small" id="rmsg" role="status"></p></div>',"rep");
+}
+async function saveFile(name,text,type){
+  var blob=new Blob([text],{type:type||"text/plain"});
+  try{var dl=window.claude&&await claude.use("downloads");if(dl){await dl.save({filename:name,data:blob});return "ok";}}catch(e){if(e&&e.code==="declined")return "declined";}
+  try{var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();return "ok";}catch(e2){return "fail";}
+}
+async function copyText(tx,el){
+  try{await navigator.clipboard.writeText(tx);return true;}catch(e){if(el){try{el.focus();el.select();}catch(e3){}}return false;}
+}
+
+/* ---- profissional (interações) ---- */
+function profScreen(){
+  var un=[],seen={};S.meds.forEach(function(m){var k=norm(m.name);if(!seen[k]){seen[k]=1;un.push(m.name);}});
+  openScr(topBar("Para o profissional de saúde")+'<div class="grow"><p class="lead">Confira possíveis interações em fontes confiáveis. O aplicativo só organiza a lista: quem avalia e decide é o profissional. O Drugs.com costuma pedir o princípio ativo em inglês (losartana = losartan).</p>'+(un.length?un.map(function(n){return '<div class="li"><span class="t">'+esc(n)+'</span><a class="lk" href="https://www.drugs.com/search.php?searchterm='+encodeURIComponent(n)+'" target="_blank" rel="noopener noreferrer">Drugs.com</a></div>';}).join(""):'<p>Cadastre medicamentos para ver a lista.</p>')+'<div class="fld" style="margin-top:14px"><label for="plist">Lista para copiar</label><textarea id="plist" readonly>'+esc(un.join("\n"))+'</textarea></div><button class="btn sec" data-a="pcopy">Copiar lista</button><p class="small" id="pmsg" role="status" style="margin-top:8px"></p><div class="sep"></div><p><a class="lk" href="https://www.drugs.com/drug_interactions.html" target="_blank" rel="noopener noreferrer">Verificador de interações do Drugs.com ↗</a></p><p style="margin-top:10px"><a class="lk" href="https://consultas.anvisa.gov.br/#/bulario/" target="_blank" rel="noopener noreferrer">Bulário eletrônico da Anvisa ↗</a></p><p class="small" style="margin-top:14px">A ausência de alerta nessas fontes não garante segurança. Considere dose, idade, doenças e outros produtos usados pela pessoa.</p></div>',"prof");
+}
+
+/* ---- lembretes e alarmes ---- */
+function remItems(){
+  var o=[];
+  S.meds.forEach(function(m){if(m.prn)return;m.times.filter(Boolean).forEach(function(t){o.push({it:m,t:t,title:"Hora do remédio",body:m.name+" · "+medSub(m)});});});
+  S.plans.forEach(function(p){p.times.filter(Boolean).forEach(function(t){o.push({it:p,t:t,title:p.type==="consulta"?"Consulta médica hoje":p.kind==="measure"?"Hora de medir":p.kind==="mood"?"Como você está?":"Hora da atividade",body:planName(p)});});});
+  return o;
+}
+async function refreshPerms(){
+  if(!isNative())return;
+  var LN=Capacitor.Plugins.LocalNotifications;
+  try{var p=await LN.checkPermissions();RT.notif=p.display;}catch(e){}
+  try{var x=await LN.checkExactNotificationSetting();RT.exact=x&&x.exact_alarm;}catch(e2){}
+  render();
+}
+function almSay(t){var e=$("#almm");if(e)e.textContent=t;}
+async function almSync(ask){
+  var LN=isNative()?Capacitor.Plugins.LocalNotifications:null;
+  if(!LN){if(ask)almSay("Os alarmes só funcionam no app instalado no Android.");return;}
+  try{
+    var pm=await LN.checkPermissions();
+    if(pm.display!=="granted"){if(!ask)return;pm=await LN.requestPermissions();}
+    RT.notif=pm.display;
+    if(pm.display!=="granted"){almSay("Permita as notificações nas configurações do celular.");render();return;}
+    try{var ex=await LN.checkExactNotificationSetting();RT.exact=ex&&ex.exact_alarm;if(ex&&ex.exact_alarm!=="granted"&&ask){almSay("Permita “Alarmes e lembretes” para o app tocar na hora certa.");await LN.changeExactNotificationSetting();}}catch(e2){}
+    try{await LN.registerActionTypes({types:[{id:"DOSE",actions:[{id:"tomei",title:"Tomei ✓"},{id:"nao",title:"Não tomei"}]}]});}catch(e4){}
+    var pe=await LN.getPending();
+    if(pe&&pe.notifications&&pe.notifications.length)await LN.cancel({notifications:pe.notifications.map(function(n){return {id:n.id};})});
+    var list=[],id=100,now=new Date(),td=today(),items=remItems();
+    items.forEach(function(x){
+      var hm=x.t.split(":"),H=+hm[0],M=+hm[1],it=x.it,cont=!(it.dur>0)&&(!it.start||pd(it.start)<=td);
+      if(cont){
+        var wds=(it.days&&it.days.length)?it.days:[null];
+        wds.forEach(function(w){var on={hour:H,minute:M};if(w!==null)on.weekday=w+1;list.push({id:id++,title:x.title,body:x.body,actionTypeId:"DOSE",extra:{i:it.id,t:x.t},schedule:{on:on,allowWhileIdle:true}});});
+      }else{
+        for(var i=0;i<60;i++){var day=addD(td,i),at=new Date(day.getFullYear(),day.getMonth(),day.getDate(),H,M);if(at<=now||!dueOn(it,day))continue;list.push({id:id++,title:x.title,body:x.body,actionTypeId:"DOSE",extra:{i:it.id,t:x.t},schedule:{at:at,allowWhileIdle:true}});}
+      }
+    });
+    if(list.length>450)list=list.slice(0,450);
+    if(list.length)await LN.schedule({notifications:list});
+    if(ask){S.alarmsOn=true;try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e3){}}
+    almSay(items.length?"Lembretes ativos para "+items.length+" horário(s).":"Defina o horário de ao menos um item.");render();
+  }catch(e){almSay("Não consegui ativar os lembretes.");}
+}
+function icsEsc(s){return String(s).replace(/\\/g,"\\\\").replace(/;/g,"\;").replace(/,/g,"\\,").replace(/\r?\n/g,"\\n");}
+function icsFold(l){var o=[];while(l.length>70){o.push(l.slice(0,70));l=" "+l.slice(70);}o.push(l);return o.join("\r\n");}
+function icsD(d){return d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate());}
+function buildIcs(){
+  var BD=["SU","MO","TU","WE","TH","FR","SA"],L=["BEGIN:VCALENDAR","VERSION:2.0","PRODID:-//Meus Medicamentos//PT-BR//","CALSCALE:GREGORIAN","METHOD:PUBLISH"],n=0,stamp=icsD(new Date())+"T000000Z";
+  remItems().forEach(function(x){
+    var it=x.it,hm=x.t.split(":"),T=pad(+hm[0])+pad(+hm[1])+"00",start=it.start?pd(it.start):today(),first=null,cnt=0,i;
+    for(i=0;i<800;i++){var d=addD(start,i);if(it.dur>0&&i>=it.dur)break;if(it.days&&it.days.length&&it.days.indexOf(d.getDay())<0)continue;if(!first)first=d;cnt++;}
+    if(!first)return;
+    var rr=(it.days&&it.days.length&&it.days.length<7)?"FREQ=WEEKLY;BYDAY="+it.days.map(function(q){return BD[q];}).join(","):"FREQ=DAILY";
+    if(it.dur>0)rr+=";COUNT="+cnt;
+    L.push("BEGIN:VEVENT","UID:"+it.id+"-"+x.t.replace(":","")+"@meusmedicamentos","DTSTAMP:"+stamp,"DTSTART:"+icsD(first)+"T"+T,"DTEND:"+icsD(first)+"T"+pad(+hm[0])+pad(Math.min(59,+hm[1]+15))+"00","RRULE:"+rr,icsFold("SUMMARY:"+icsEsc(x.title+" - "+x.body)),"BEGIN:VALARM","ACTION:DISPLAY","TRIGGER:PT0S","DESCRIPTION:"+icsEsc(x.title),"END:VALARM","END:VEVENT");
+    n++;
+  });
+  L.push("END:VCALENDAR");return {text:L.join("\r\n")+"\r\n",n:n};
+}
+function remScreen(){
+  var nat=isNative(),n=remItems().length;
+  openScr(topBar("Lembretes")+'<div class="grow"><p class="lead">'+(n?n+" horário(s) com lembrete.":"Defina horários nos medicamentos para receber lembretes.")+'</p>'+
+   (nat?'<div class="stack"><button class="btn" data-a="almon">'+IC.bell+(S.alarmsOn?"Atualizar lembretes no aparelho":"Ativar lembretes no aparelho")+'</button><button class="btn ghost" data-a="almoff">Desligar lembretes</button></div><div class="note warn" style="margin-top:16px">'+IC.warn+'<div class="nt"><b>Para tocar na hora certa</b>Em Configurações do celular, abra Apps, escolha este aplicativo, depois Bateria, e marque “Sem restrições”. Em alguns aparelhos também é preciso permitir “Início automático”.</div></div>':
+   '<div class="note info">'+IC.info+'<div class="nt"><b>Aqui no navegador o celular não toca alarmes</b>Há duas saídas: instalar o aplicativo no Android, ou enviar os horários para o Google Calendar, que avisa nos horários certos.</div></div><button class="btn" data-a="ics">Enviar para o calendário (.ics)</button><p class="small" style="margin-top:10px">Abra o arquivo no celular e escolha Google Calendar. Se enviar de novo, apague os eventos antigos para não duplicar.</p>')+
+   '<button class="btn sec" data-a="shortcut" style="margin-top:14px">Atalho “Marcar agora” na tela inicial</button><p class="small" id="almm" role="status" style="margin-top:14px"></p><p class="small" style="margin-top:8px">O aviso é uma notificação com som. Ele toca mesmo se você já tiver marcado a dose.</p></div>',"rem");
+}
+
+/* ---- configurações ---- */
+function settingsScreen(){
+  openScr(topBar("Configurações")+'<div class="grow"><div class="fld"><label for="snm">Seu nome</label><input id="snm" maxlength="30" value="'+esc(S.name)+'" autocomplete="given-name"></div>'+optB("rem",IC.bell,"Lembretes e alarmes","")+optB("share",IC.doc,"Resumo para a consulta","")+optB("prof",IC.pro,"Para o profissional de saúde","")+optB("backup",IC.send,"Backup e restauração","Levar os dados para outro aparelho")+optB("wipe",IC.close,"Apagar todos os dados","Não dá para desfazer")+'<p class="small" style="margin-top:18px">Idealizado por <b>Farmacêutica Dra. Ana Paula de Andrade Barbosa</b>.<br>Os dados ficam somente neste aparelho. Este aplicativo não substitui a orientação do médico ou do farmacêutico.</p></div>',"set");
+}
+function backupScreen(){
+  openScr(topBar("Backup")+'<div class="grow"><p class="lead">Gere um código com todos os seus dados e guarde em local seguro. Para restaurar em outro aparelho, cole o código e toque em Restaurar.</p><div class="fld"><label for="bkt">Código</label><textarea id="bkt" style="min-height:140px;font-size:13px" placeholder="O código aparece aqui, ou cole um código para restaurar"></textarea></div><div class="stack"><button class="btn" data-a="bke">Gerar código</button><button class="btn sec" data-a="bkc">Copiar código</button><button class="btn ghost" data-a="bki">Restaurar</button></div><p class="small" id="bkm" role="status" style="margin-top:12px"></p></div>',"bk");
+}
+
+/* ---- marcação rápida (atalho / botões da notificação) ---- */
+function quickList(){
+  var td=today(),now=new Date(),hm=pad(now.getHours())+":"+pad(now.getMinutes());
+  return slotsOn(td).filter(function(sl){return sl.kind==="med"&&st(sl.key)===0&&(!sl.time||sl.time<=addMin(hm,90));});
+}
+function addMin(hm,m){var p=hm.split(":"),t=(+p[0])*60+(+p[1])+m;if(t>=1440)return "23:59";return pad(Math.floor(t/60))+":"+pad(t%60);}
+function quickScreen(){
+  var L=quickList();
+  openScr(topBar("Marcar agora")+'<div class="grow"><p class="lead">'+(L.length?"Toque para registrar:":"Nenhum remédio pendente neste momento. Tudo certo!")+'</p>'+L.map(function(sl){
+    return '<div class="card" style="margin-bottom:10px"><div class="t" style="font-weight:700">'+esc(sl.it.name)+(sl.time?' · '+sl.time:'')+'</div><div class="small">'+esc(medSub(sl.it))+'</div><div class="rowflex" style="margin-top:10px"><button class="btn" data-a="qk" data-v="1" data-k="'+esc(sl.key)+'">Tomei</button><button class="btn ghost" data-a="qk" data-v="2" data-k="'+esc(sl.key)+'">Não tomei</button></div></div>';
+  }).join("")+'<button class="btn sec" data-a="scrx" style="margin-top:8px">Abrir o aplicativo</button></div>',"quick");
+}
+function shortcutSheet(name){
+  var nat=isNative(),link=(location.href||"").split("#")[0]+"#tomei";
+  openSheet('<h2>Marcar mais rápido</h2><p class="lead">'+esc(name)+' foi cadastrado. Quer receber um lembrete com os botões <b>Tomei</b> e <b>Não tomei</b> e ter um atalho na tela inicial?</p>'+
+    (nat?'<button class="btn" data-a="shon">Ligar lembretes com botões</button>':'<div class="note info">Os lembretes com botões funcionam no aplicativo instalado no Android. Aqui na versão de navegador você pode criar um atalho na tela inicial.</div>')+
+    '<div class="sep"></div><h3>Atalho na tela inicial</h3><p class="small">'+(nat?'Segure o dedo sobre o ícone do app e escolha <b>Marcar agora</b>, ou arraste esse atalho para a tela inicial.':'Abra o link abaixo no navegador do celular, toque no menu (⋮ ou compartilhar) e escolha <b>Adicionar à tela inicial</b>. O ícone abrirá direto a tela de marcar.')+'</p>'+
+    (nat?'':'<div class="fld"><textarea id="shl" readonly rows="2">'+esc(link)+'</textarea></div><button class="btn sec" data-a="shcopy">Copiar link do atalho</button><p class="small" id="shm" role="status"></p>')+
+    '<button class="btn ghost" data-a="shno" style="margin-top:10px">Agora não</button>');
+}
+function quickMark(k,v){
+  var sl=slotByKey(k);if(!sl)return false;
+  var cur=st(k);if(cur===v)return true;
+  if(cur)setStatus(sl,cur);
+  setStatus(sl,v);return true;
+}
+function initNotifActions(){
+  if(!isNative())return;
+  var LN=Capacitor.Plugins.LocalNotifications;
+  try{LN.addListener("localNotificationActionPerformed",function(ev){
+    var ex=ev.notification&&ev.notification.extra||{},a=ev.actionId;
+    if(!ex.i||!ex.t)return;
+    var k=iso(today())+"|"+ex.i+"|"+ex.t;
+    if(a==="tomei"||a==="nao"){quickMark(k,a==="tomei"?1:2);render();toast(a==="tomei"?"Registrado: tomei.":"Registrado: não tomei.");
+      try{var A=Capacitor.Plugins.App;if(A&&A.minimizeApp)setTimeout(function(){A.minimizeApp();},900);}catch(e){}}
+    else{quickScreen();}
+  });}catch(e){}
+  try{var A2=Capacitor.Plugins.App;if(A2&&A2.getLaunchUrl)A2.getLaunchUrl().then(function(r){if(r&&r.url&&r.url.indexOf("tomei")>=0)setTimeout(quickScreen,300);}).catch(function(){});if(A2&&A2.addListener)A2.addListener("appUrlOpen",function(ev){if(ev&&ev.url&&ev.url.indexOf("tomei")>=0)quickScreen();});}catch(e){}
+}
+
+/* ===== eventos e inicialização ===== */
+function allDone(){var s=dayStats(today());return s.tot>0&&s.tk===s.tot;}
+function toggleSlot(k){
+  var sl=slotByKey(k);if(!sl)return;
+  if(pd(sl.date)>today())return;
+  if(sl.kind==="measure"){measSheet(sl.it.type,k);return;}
+  if(sl.kind==="mood"){moodSheet(sl.date,k);return;}
+  var was=allDone(),v=setStatus(sl,1);render();
+  if(v===1){buzz();var b=$('.dot[data-k="'+k.replace(/"/g,'\\"')+'"]');if(b)b.classList.add("pop");if(!was&&allDone()&&sl.date===iso(today()))toast("Tudo certo por hoje!");}
+}
+function delEntry(id){
+  var p=id.split(":"),t=p[0],key=p.slice(1).join(":");
+  confirmBox("Apagar este registro?","Não dá para desfazer.","Sim, apagar",function(){
+    if(t==="rec")S.records=S.records.filter(function(r){return r.id!==key;});
+    else if(t==="mood")delete S.moods[key];
+    else if(t==="log")S.logs=S.logs.filter(function(l){return l.id!==key;});
+    else if(t==="prn"){var pr=S.prn.filter(function(x){return x.id===key;})[0];S.prn=S.prn.filter(function(x){return x.id!==key;});var m=pr&&findItem(pr.med);if(m&&m.stockOn)m.stock=r2(m.stock+m.qty);}
+    save();render();toast("Registro apagado.");
+  });
+}
+var ocTypes=[];
+function act(a,el){
+  var v=el.dataset.v,id=el.dataset.id,k=el.dataset.k;
+  switch(a){
+  case "tab":tab=v;render();window.scrollTo(0,0);break;
+  case "add":addMenu();break;
+  case "day":selDate=pd(v);render();break;
+  case "wk":selDate=addD(selDate,7*(+v));render();break;
+  case "tog":toggleSlot(k);break;
+  case "slot":slotSheet(k);break;
+  case "sl-take":{var sl=slotByKey(curK);if(sl){setStatus(sl,1);}closeSheet();render();buzz();break;}
+  case "sl-skip":{var s2=slotByKey(curK);if(s2){setStatus(s2,2);}closeSheet();render();break;}
+  case "sl-meas":{var s3=slotByKey(curK);if(s3)measSheet(s3.it.type,curK);break;}
+  case "sl-mood":{var s4=slotByKey(curK);if(s4)moodSheet(s4.date,curK);break;}
+  case "hidetip":S.hideTip=true;save();render();break;
+  case "snooze":S.snooze[id]=iso(today());save();render();break;
+  case "refill":refillSheet(id);break;
+  case "rfsave":{var q=num($("#rfq").value),m=findItem(id);if(!m||q===null||q<=0){toast("Informe quantas unidades recebeu.");break;}m.stock=r2(m.stock+q);delete S.snooze[id];save();closeSheet();render();toast("Estoque atualizado: "+stockText(m)+".");break;}
+  case "prn":{var pm=findItem(id);if(!pm)break;var n=new Date();S.prn.push({id:uid(),med:id,ts:iso(n)+"T"+pad(n.getHours())+":"+pad(n.getMinutes())});if(pm.stockOn)pm.stock=Math.max(0,r2(pm.stock-pm.qty));save();render();buzz();toast(pm.name+" registrado.");break;}
+  case "newmed":closeSheet();wizStart();break;
+  case "medv":closeSheet();medSheet(id);break;
+  case "medit":closeSheet();medEdit(id);break;
+  case "mdel":removeMed(id);break;
+  case "esave":editSave();break;
+  case "planv":closeSheet();planSheet(id);break;
+  case "pedit":closeSheet();planEdit(id);break;
+  case "pdel":planRemove(id);break;
+  case "psave":planSave();break;
+  case "apick":F.name=v;planRender();break;
+  case "newmeas":closeSheet();measPicker("plan");break;
+  case "meas":if(v)measSheet(v);else measPicker("rec");break;
+  case "mpick":if(pickMode==="rec")measSheet(v);else{closeSheet();planNew("measure",v);}break;
+  case "msave":measSave(v);break;
+  case "newapt":closeSheet();planNew("activity","consulta","");break;
+  case "newact":closeSheet();planNew("activity","","");break;
+  case "newmood":closeSheet();planNew("mood");break;
+  case "mood":moodSheet(v||iso(today()));break;
+  case "mset":moodSel=+v;$$(".moods button").forEach(function(b){b.classList.toggle("on",b.dataset.v===v);});break;
+  case "msym":{var sy=SYMS[+v],ix=moodSym.indexOf(sy);if(ix>=0)moodSym.splice(ix,1);else moodSym.push(sy);el.classList.toggle("on",ix<0);break;}
+  case "mdsave":{if(!moodSel){toast("Escolha como você está.");break;}S.moods[v]={m:moodSel,sym:moodSym.slice(),note:$("#mdn").value.trim()};
+    if(curK){var sm=slotByKey(curK);if(sm&&st(curK)!==1)setStatus(sm,1);curK=null;}
+    save();closeSheet();render();toast("Humor registrado.");buzz();break;}
+  case "oc":closeSheet();ocTypes=[];ocSheet(id,null);break;
+  case "octg":{var i=ocTypes.indexOf(v);if(i>=0)ocTypes.splice(i,1);else ocTypes.push(v);el.classList.toggle("on",i<0);break;}
+  case "ocsave":{if(!ocTypes.length){toast("Marque o que aconteceu.");break;}S.logs.push({id:uid(),med:$("#ocm").value,date:$("#ocd").value||iso(today()),types:ocTypes.slice(),note:$("#ocn").value.trim().slice(0,500)});
+    var hasR=ocTypes.indexOf("reacao")>=0||ocTypes.indexOf("dobro")>=0;save();closeSheet();render();
+    toast(hasR?"Registro salvo. Avise seu médico ou farmacêutico. Reação forte: procure urgência.":"Registro salvo.");break;}
+  case "goal":goalSheet();break;
+  case "glsave":{var g=num($("#gl").value);if(g===null||g<=0){delete S.goals.peso;}else S.goals.peso=g;save();closeSheet();render();break;}
+  case "ptab":progTab=v;render();break;
+  case "dele":delEntry(v);break;
+  case "share":closeSheet();repScreen();break;
+  case "rperiod":repP=v;repScreen();break;
+  case "rcopy":{var r=buildReport();copyText(r.text).then(function(ok){var e=$("#rmsg");if(e)e.textContent=ok?"Texto copiado. Cole em uma mensagem ou documento.":"Não consegui copiar automaticamente.";});break;}
+  case "rsave":{var r2x=buildReport();saveFile("resumo-medicamentos.txt",r2x.text).then(function(x){var e=$("#rmsg");if(e)e.textContent=x==="ok"?"Arquivo pronto.":x==="declined"?"Você cancelou o salvamento.":"Não consegui salvar neste ambiente. Use Copiar texto.";});break;}
+  case "chat":chatScreen();break;
+  case "csend":chatSend($("#cin").value);break;
+  case "csug":chatSend(v);break;
+  case "chatctx":chatCtx=!chatCtx;chatScreen();break;
+  case "rx":closeSheet();rxScreen();break;
+  case "rxtog":{var on=el.classList.toggle("on");el.setAttribute("aria-pressed",on);break;}
+  case "rxadd":{var sel=$$("#pend .rad.on").map(function(b){return +b.dataset.v;}),c=0;sel.forEach(function(i){if(pend[i]){S.meds.push(pend[i]);c++;}});if(!c){toast("Marque ao menos um medicamento.");break;}S.onboarded=S.onboarded||!onbFlow;pend=[];save();closeScr();tab="hoje";selDate=today();render();toast(c+(c===1?" medicamento adicionado.":" medicamentos adicionados."));break;}
+  case "rxno":pend=[];pendPaint();var e=$("#rxs");if(e)e.textContent="";break;
+  case "prof":closeSheet();profScreen();break;
+  case "pcopy":copyText($("#plist").value,$("#plist")).then(function(ok){var e2=$("#pmsg");if(e2)e2.textContent=ok?"Lista copiada. Cole no verificador.":"Selecione o texto e copie manualmente.";});break;
+  case "settings":settingsScreen();break;
+  case "rem":remScreen();break;
+  case "almon":almSync(true);break;
+  case "almoff":{S.alarmsOn=false;save();if(isNative()){var LN=Capacitor.Plugins.LocalNotifications;LN.getPending().then(function(pe){if(pe&&pe.notifications&&pe.notifications.length)return LN.cancel({notifications:pe.notifications.map(function(n){return {id:n.id};})});}).then(function(){almSay("Lembretes desligados.");render();});}break;}
+  case "ics":{var ic=buildIcs();if(!ic.n){almSay("Defina o horário de ao menos um item antes de enviar.");break;}saveFile("meus-medicamentos.ics",ic.text,"text/calendar").then(function(x){almSay(x==="ok"?"Arquivo gerado com "+ic.n+" horário(s). Abra no celular e escolha Google Calendar.":x==="declined"?"Você cancelou o salvamento.":"Não consegui gerar o arquivo neste ambiente.");});break;}
+  case "backup":backupScreen();break;
+  case "bke":{var t=$("#bkt");t.value=JSON.stringify(S);t.select();$("#bkm").textContent="Código gerado. Copie e guarde em local seguro.";break;}
+  case "bkc":copyText($("#bkt").value,$("#bkt")).then(function(ok){$("#bkm").textContent=ok?"Código copiado.":"Selecione o texto e copie manualmente.";});break;
+  case "bki":{try{var o=JSON.parse($("#bkt").value);if(!o||!Array.isArray(o.meds))throw 0;S=migrate(o);S.onboarded=true;save();$("#bkm").textContent="Dados restaurados.";render();}catch(e3){$("#bkm").textContent="Código inválido. Confira se colou tudo.";}break;}
+  case "wipe":confirmBox("Apagar todos os dados?","Remédios, marcações, medições e registros serão apagados deste aparelho. Não dá para desfazer.","Sim, apagar tudo",function(){S=blank();save();try{localStorage.removeItem(KEY);}catch(e){}onbFlow=true;onbShow.named=false;tab="hoje";selDate=today();$("#scr").hidden=true;render();onbShow();});break;
+  case "qk":{quickMark(k,+v);buzz();quickScreen();render();break;}
+  case "shon":almSync(true).then(function(){closeSheet();toast("Lembretes com botões ativados.");});break;
+  case "shcopy":copyText($("#shl").value,$("#shl")).then(function(ok){var e=$("#shm");if(e)e.textContent=ok?"Link copiado.":"Selecione o texto e copie manualmente.";});break;
+  case "shno":closeSheet();break;
+  case "shortcut":shortcutSheet("Seus remédios");break;
+  case "scrx":closeScr();break;
+  case "wback":if(wStep>0){wStep--;wizRender();}else closeScr();break;
+  case "wnext":wizNext();break;
+  case "wskip":wizNext();break;
+  case "wsave":wizSave();break;
+  case "wpick":F.name=v;{var fm=formOf(v);if(fm&&FORMU[fm]&&UNITS.indexOf(FORMU[fm])>=0)F.unit=FORMU[fm];}wizNext();break;
+  case "wpurp":{var pu=purpList(F.name)[+v],pi=F.purpose.indexOf(pu);if(pi>=0)F.purpose.splice(pi,1);else F.purpose.push(pu);el.classList.toggle("on",pi<0);el.setAttribute("aria-pressed",pi<0);break;}
+  case "wfreq":F.freq=v;if(v!=="custom"&&v!=="prn")F.n=+v;wizRender();break;
+  case "wn":F.n=Math.max(1,Math.min(6,F.n+(+v)));wizRender();break;
+  case "dtog":{var d=+v,di=F.days.indexOf(d);if(di>=0)F.days.splice(di,1);else F.days.push(d);el.classList.toggle("on",di<0);el.setAttribute("aria-pressed",di<0);break;}
+  case "tadd":F.times.push("12:00");rerenderForm();break;
+  case "tdel":F.times.splice(+v,1);rerenderForm();break;
+  case "swstock":F.stockOn=!F.stockOn;rerenderForm();break;
+  case "swprn":F.prn=!F.prn;if(F.prn)F.times=[];else if(!F.times.length)F.times=["08:00"];editRender();break;
+  case "onb1":{var nv=$("#onm").value.trim();if(nv){S.name=nv;save();}onbShow.named=true;onbShow();break;}
+  case "onbdone":S.onboarded=true;onbFlow=false;save();closeScr();if(S.meds.some(function(m){return !m.prn;}))setTimeout(function(){shortcutSheet(S.meds[0].name);},350);break;
+  }
+}
+function rerenderForm(){if(scr==="wiz")wizRender();else if(scr==="edit")editRender();else if(scr==="plan")planRender();}
+document.addEventListener("click",function(e){
+  if(e.target.id==="bk"){closeSheet();return;}
+  var el=e.target.closest("[data-a]");if(!el||el.disabled)return;
+  e.preventDefault();act(el.dataset.a,el);
+});
+document.addEventListener("input",function(e){
+  var el=e.target;
+  if(el.id==="snm"){S.name=el.value.trim();save();return;}
+  var f=el.dataset&&el.dataset.f;if(!f||!F)return;
+  if(f==="time")F.times[+el.dataset.i]=el.value;else F[f]=el.value;
+  if(f==="name"&&scr==="wiz")sugUpdate();
+});
+document.addEventListener("change",function(e){
+  var el=e.target;
+  if((el.id==="rx"||el.id==="rxc")&&el.files&&el.files.length)readRx(el);
+});
+document.addEventListener("keydown",function(e){
+  if(e.key==="Enter"&&e.target.id==="cin"){e.preventDefault();chatSend(e.target.value);}
+  else if(e.key==="Enter"&&e.target.id==="wname"){e.preventDefault();wizNext();}
+  else if(e.key==="Escape"){if(!$("#cfm").hidden)$("#cfm").hidden=true;else if(!$("#bk").hidden)closeSheet();}
+});
+$("#cfmN").onclick=function(){$("#cfm").hidden=true;cfmFn=null;};
+$("#cfmY").onclick=function(){var f=cfmFn;cfmFn=null;$("#cfm").hidden=true;if(f)f();};
+document.addEventListener("visibilitychange",function(){if(!document.hidden){var t=today();if(iso(selDate)!==iso(t)&&selDate<addD(t,-1)){}refreshPerms();render();}});
+render();
+if(!S.onboarded&&!S.meds.length&&!S.plans.length)onbShow();else if(!S.onboarded){S.onboarded=true;save();}
+refreshPerms();
+initNotifActions();
+if(S.alarmsOn)almSync(false);
+function hashGo(){if(location.hash==="#tomei"&&!(onbFlow&&!S.onboarded))quickScreen();}
+window.addEventListener("hashchange",hashGo);
+try{if(/[?&]acao=tomei/.test(location.search))quickScreen();else hashGo();}catch(e){}
+
+})();
+</script>
+<script>if("serviceWorker" in navigator&&location.protocol.indexOf("http")===0)navigator.serviceWorker.register("sw.js").catch(function(){});</script></body></html>
