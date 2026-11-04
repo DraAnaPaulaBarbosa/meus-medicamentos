@@ -95,7 +95,7 @@ p{margin:0}
 .empty{border:2px dashed var(--line);border-radius:20px;padding:18px;color:var(--muted);display:flex;align-items:center;gap:12px;width:100%;background:none;text-align:left}
 /* nav + fab */
 #nav{position:fixed;left:0;right:0;bottom:0;z-index:30;background:var(--card);border-top:1px solid var(--line);display:flex;justify-content:center;padding:0 max(8px,env(safe-area-inset-left,0px)) env(safe-area-inset-bottom,0px)}
-#nav .in{display:grid;grid-template-columns:repeat(4,1fr);width:100%;max-width:560px}
+#nav .in{display:grid;grid-template-columns:repeat(5,1fr);width:100%;max-width:560px}
 #nav button{background:none;border:0;min-height:var(--navh);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:var(--muted);font-size:14px;font-weight:700}
 #nav button.on{color:var(--accent)}
 #nav button.on .ic{stroke-width:2.6}
@@ -203,13 +203,17 @@ a.lk{color:var(--accent);font-weight:700}
 
 .sug .lnk{border-bottom:0;justify-content:flex-start;text-align:left;font-size:15px;min-height:44px;padding:0}
 
+#nav .add{color:var(--accent)}#nav .add .bd{width:40px;height:40px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;box-shadow:var(--shadow)}#nav .add .ic{stroke:currentColor;stroke-width:2.6}#nav button{font-size:13px;min-width:0}
+
+#nav .add .bd{width:52px;height:52px}#nav .add .ic{width:28px;height:28px}
+
 </style></head><body>
 <div class="hd" id="hd"></div>
 <main class="wrap" id="main"></main>
-<button id="fab" data-a="add" aria-label="Adicionar"><svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Adicionar</button>
 <nav id="nav"><div class="in">
 <button data-a="tab" data-v="hoje" data-t="hoje"><span class="bd"><svg class="ic" viewBox="0 0 24 24"><path d="M4 11l8-7 8 7v9a1 1 0 0 1-1 1h-4v-6H9v6H5a1 1 0 0 1-1-1z"/></svg></span>Hoje</button>
 <button data-a="tab" data-v="prog" data-t="prog"><span class="bd"><svg class="ic" viewBox="0 0 24 24"><path d="M5 20V11M12 20V4M19 20v-6"/></svg></span>Progresso</button>
+<button data-a="add" class="add" aria-label="Adicionar"><span class="bd"><svg class="ic" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></span></button>
 <button data-a="tab" data-v="apoio" data-t="apoio"><span class="bd"><svg class="ic" viewBox="0 0 24 24"><path d="M4 5h16v11H9l-5 4z"/></svg></span>Apoio</button>
 <button data-a="tab" data-v="trat" data-t="trat"><span class="bd" id="bdTrat"><svg class="ic" viewBox="0 0 24 24"><rect x="3" y="9" width="18" height="6" rx="3" transform="rotate(-45 12 12)"/><path d="M9.2 9.2l5.6 5.6"/></svg></span>Tratamento</button>
 </div></nav>
@@ -243,7 +247,7 @@ function r2(x){return Math.round(x*100)/100;}
 function norm(s){return String(s).normalize("NFD").replace(/[̀-ͯ]/g,"").toLowerCase();}
 function tkey(t){return t||"99:99";}
 
-function blank(){return {v:2,name:"",meds:[],plans:[],checks:{},logs:[],records:[],moods:{},prn:[],goals:{},onboarded:false,hideTip:false,alarmsOn:false,snooze:{}};}
+function blank(){return {v:2,name:"",meds:[],plans:[],checks:{},logs:[],records:[],moods:{},prn:[],exams:[],goals:{},onboarded:false,hideTip:false,hideInstall:false,alarmsOn:false,snooze:{}};}
 function fixMed(m){
   var times=Array.isArray(m.times)?m.times.map(String):(m.time?[String(m.time)]:(m.prn?[]:[""]));
   return {id:String(m.id||uid()),name:String(m.name||"Medicamento"),unit:String(m.unit||"dose(s)"),qty:(+m.qty>0?+m.qty:1),
@@ -264,8 +268,9 @@ function migrate(o){
   s.records=Array.isArray(o.records)?o.records:[];
   s.moods=(o.moods&&typeof o.moods==="object")?o.moods:{};
   s.prn=Array.isArray(o.prn)?o.prn:[];
+  s.exams=(Array.isArray(o.exams)?o.exams:[]).filter(function(e){return e&&e.id&&e.date&&Array.isArray(e.items);}).map(function(e){return {id:String(e.id),date:String(e.date),lab:String(e.lab||""),items:e.items.slice(0,40).map(function(i){return {name:String(i.name||""),value:String(i.value||""),unit:String(i.unit||""),ref:String(i.ref||""),flag:(i.flag==="alto"||i.flag==="baixo")?i.flag:""};}),summary:String(e.summary||"")};});
   s.goals=(o.goals&&typeof o.goals==="object")?o.goals:{};
-  s.hideTip=!!o.hideTip;s.alarmsOn=!!o.alarmsOn;s.snooze=(o.snooze&&typeof o.snooze==="object")?o.snooze:{};
+  s.hideTip=!!o.hideTip;s.hideInstall=!!o.hideInstall;s.alarmsOn=!!o.alarmsOn;s.snooze=(o.snooze&&typeof o.snooze==="object")?o.snooze:{};
   var oc=(o.checks&&typeof o.checks==="object")?o.checks:{};
   if(!o.v||o.v<2){
     var nc={};
@@ -437,13 +442,29 @@ function slotRow(s,fut){
   var v=st(s.key),ic=v===1?IC.check:v===2?IC.minus:"";
   return '<div class="row'+(v===1?" done":"")+'"><button class="rt" data-a="slot" data-k="'+esc(s.key)+'"><span class="rn">'+esc(slotName(s))+'</span><span class="rs">'+esc(slotSub(s))+(v===2?" · pulada":"")+'</span></button><button class="dot'+(v===1?" on":v===2?" sk":"")+'" data-a="tog" data-k="'+esc(s.key)+'" aria-label="'+(v===1?"Desmarcar ":"Marcar ")+esc(slotName(s))+'"'+(fut?" disabled":"")+'>'+ic+'</button></div>';
 }
+
+/* ---- instalar na tela inicial (versão site) ---- */
+var DP=null;
+function isStandalone(){try{return (window.matchMedia&&matchMedia("(display-mode: standalone)").matches)||window.navigator.standalone===true;}catch(e){return false;}}
+function canShowInstall(){return !window.claude&&!isNative()&&!isStandalone();}
+function isIOS(){return /iphone|ipad|ipod/i.test(navigator.userAgent||"")||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);}
+function installSteps(){
+  if(isIOS())return 'No iPhone ou iPad (Safari): toque em <strong>Compartilhar</strong> (quadrado com seta) e depois em <strong>Adicionar à Tela de Início</strong>.';
+  if(/android/i.test(navigator.userAgent||""))return 'No Android (Chrome): toque no menu <strong>⋮</strong> e escolha <strong>Instalar app</strong> ou <strong>Adicionar à tela inicial</strong>.';
+  return 'No computador (Chrome ou Edge): clique no ícone de <strong>instalar</strong> na barra de endereço, ou no menu <strong>⋮</strong> e depois <strong>Instalar Meus Medicamentos</strong>.';
+}
+function installNote(){
+  if(S.hideInstall||!canShowInstall())return "";
+  return '<div class="note ok">'+IC.pill+'<div class="nt"><b>Deixe o app na tela inicial</b>Abra com um toque, sem baixar na loja de aplicativos. '+(DP?'':installSteps())+(DP?'<br><button class="btn sm" data-a="inst">Instalar agora</button>':'')+'</div><button class="x" data-a="hideinst" aria-label="Ocultar aviso">'+IC.close+'</button></div>';
+}
 function viewHoje(){
   var d=selDate,t=today(),isT=iso(d)===iso(t),fut=d>t,sl=slotsOn(d),tot=sl.length,tk=sl.filter(function(s){return st(s.key)===1;}).length;
   var hr=new Date().getHours(),gr=hr<12?"Bom dia":hr<18?"Boa tarde":"Boa noite",h=weekStrip();
   h+='<div class="hello">'+(isT?'<h2>'+gr+(S.name?", "+esc(S.name):"")+'</h2>':'<h2 class="cap">'+DAYS_LONG[d.getDay()]+'</h2>')+'<p class="sub">'+d.getDate()+" de "+MONTHS[d.getMonth()]+(fut?" · só visualização":"")+'</p></div>';
   if(!S.meds.length&&!S.plans.length){
-    return h+'<div class="card stack"><h3>Vamos montar seu tratamento</h3><p class="small">Cadastre seus remédios para receber lembretes e acompanhar cada dose.</p><button class="btn" data-a="newmed">'+IC.pill+'Adicionar medicamento</button><button class="btn sec" data-a="rx">'+IC.camera+'Ler receita pela foto</button></div>';
+    return h+installNote()+'<div class="card stack"><h3>Vamos montar seu tratamento</h3><p class="small">Cadastre seus remédios para receber lembretes e acompanhar cada dose.</p><button class="btn" data-a="newmed">'+IC.pill+'Adicionar medicamento</button><button class="btn sec" data-a="rx">'+IC.camera+'Ler receita pela foto</button></div>';
   }
+  h+=installNote();
   if(tot)h+='<div class="prog"><div class="bar"><i style="width:'+Math.round(tk*100/tot)+'%"></i></div><p>'+tk+' de '+tot+' concluídos</p></div>';
   if(isT&&tot&&tk===tot){var sk=streak();h+='<div class="note ok">'+IC.check+'<div class="nt"><b>Tudo certo por hoje</b>'+(sk>1?sk+' dias seguidos em dia.':'Obrigada por cuidar de você.')+'</div></div>';}
   if(!S.hideTip&&tot)h+='<div class="note info">'+IC.info+'<div class="nt"><b>Como funciona</b>Toque no círculo para marcar que tomou. Toque no nome para pular a dose ou ver mais opções.</div><button class="x" data-a="hidetip" aria-label="Ocultar dica">'+IC.close+'</button></div>';
@@ -532,6 +553,7 @@ function viewApoio(){
   function c(a,ic,t,s){return '<button class="opt" data-a="'+a+'">'+ic+'<span>'+t+'<small>'+s+'</small></span></button>';}
   return c("chat",IC.chat,"Assistente de medicamentos","Tire dúvidas com inteligência artificial. Não substitui o médico nem o farmacêutico.")+
    c("rx",IC.camera,"Ler receita pela foto","A receita vira uma lista de remédios para você conferir.")+
+   c("exm",IC.doc,"Exames e check-up anual","A IA lê resultados de exames, o app guarda os valores e lembra do check-up todo ano.")+
    c("prof",IC.pro,"Para o profissional de saúde","Lista para checar interações no Drugs.com e bulário da Anvisa.")+
    c("share",IC.doc,"Resumo para a consulta","Doses, medições e ocorrências do período.")+
    '<div class="note bad" style="margin-top:14px">'+IC.alert+'<div class="nt"><b>Em emergência</b>Ligue 192 (SAMU). Suspeita de intoxicação: Disque-Intoxicação 0800 722 6001.</div></div>'+
@@ -844,10 +866,10 @@ async function shrink(f){
     var bl=await new Promise(function(ok){c.toBlob(ok,"image/jpeg",0.85);});return bl||f;
   }catch(e){return f;}
 }
-async function aiJson(prompt,blob){
+async function aiJson(prompt,blob,mode){
   var s=await aiSample();
   if(s){var lim=await s.limits().catch(function(){return null;});if(!lim||!lim.images)throw {code:"images_unavailable"};return await s.json(prompt,{images:[blob],cache:false});}
-  if(window.API_URL){var r=await fetch(window.API_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({image:await toB64(blob),media_type:blob.type||"image/jpeg"})});if(!r.ok)throw {code:"http"};return await r.json();}
+  if(window.API_URL){var r=await fetch(window.API_URL,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({image:await toB64(blob),media_type:blob.type||"image/jpeg",mode:mode||"rx"})});if(!r.ok)throw {code:"http"};return await r.json();}
   throw {code:"unavailable"};
 }
 async function aiChat(turns,ctx){
@@ -890,7 +912,7 @@ function pendPaint(){
 var chat=[],chatCtx=false,chatBusy=false;
 function chatScreen(){
   var sug=["Posso tomar este remédio com café?","O que fazer se esqueci uma dose?","Como guardar insulina?"];
-  openScr(topBar("Assistente")+'<div class="grow"><div class="note info">'+IC.info+'<div class="nt">Sou uma inteligência artificial e posso errar. Dou informações gerais. Não substituo médico nem farmacêutico.</div></div><div class="sw"><span>Incluir minha lista de remédios</span><button type="button" role="switch" aria-checked="'+chatCtx+'" class="'+(chatCtx?"on":"")+'" data-a="chatctx" aria-label="Incluir minha lista de remédios"></button></div><p class="small" style="margin-bottom:12px">'+(chatCtx?"Os nomes e doses dos seus remédios serão enviados ao Claude junto com cada pergunta.":"Desligado: só o texto que você digitar é enviado.")+'</p><div class="sugs" id="csug">'+sug.map(function(s){return '<button data-a="csug" data-v="'+esc(s)+'">'+esc(s)+'</button>';}).join("")+'</div><div class="chat" id="cmsgs" aria-live="polite"></div></div><div class="foot"><div class="send"><input id="cin" maxlength="500" placeholder="Escreva sua dúvida" autocomplete="off" aria-label="Sua dúvida"><button data-a="csend" aria-label="Enviar">'+IC.send+'</button></div></div>',"chat");
+  openScr(topBar("Assistente")+'<div class="grow"><div class="note info">'+IC.info+'<div class="nt">Sou uma inteligência artificial e posso errar. Dou informações gerais. Não substituo médico nem farmacêutico.</div></div><div class="sw"><span>Incluir meus remédios e exames</span><button type="button" role="switch" aria-checked="'+chatCtx+'" class="'+(chatCtx?"on":"")+'" data-a="chatctx" aria-label="Incluir meus remédios e exames"></button></div><p class="small" style="margin-bottom:12px">'+(chatCtx?"Os nomes e doses dos seus remédios e os valores dos exames guardados serão enviados ao Claude junto com cada pergunta.":"Desligado: só o texto que você digitar é enviado.")+'</p><button class="btn sec" data-a="exm" style="margin-bottom:12px">Anexar resultado de exame</button><div class="sugs" id="csug">'+sug.map(function(s){return '<button data-a="csug" data-v="'+esc(s)+'">'+esc(s)+'</button>';}).join("")+'</div><div class="chat" id="cmsgs" aria-live="polite"></div></div><div class="foot"><div class="send"><input id="cin" maxlength="500" placeholder="Escreva sua dúvida" autocomplete="off" aria-label="Sua dúvida"><button data-a="csend" aria-label="Enviar">'+IC.send+'</button></div></div>',"chat");
   chatPaint();
 }
 function chatPaint(){
@@ -903,6 +925,7 @@ async function chatSend(text){
   text=String(text||"").trim();if(!text||chatBusy)return;
   chat.push({role:"user",content:text});chatBusy=true;chatPaint();var inp=$("#cin");if(inp)inp.value="";
   var ctx=chatCtx&&S.meds.length?"Medicamentos em uso da pessoa: "+S.meds.map(function(m){return m.name+" ("+medSub(m)+", "+schedText(m)+")";}).join("; ")+".":"";
+  if(chatCtx&&S.exams.length)ctx+=(ctx?"\n":"")+"Resultados de exames guardados: "+examsCtx()+". Explique valores só em linguagem simples, sem diagnóstico.";
   try{var a=await aiChat(chat.slice(-8),ctx);chat.push({role:"assistant",content:String(a||"").trim()||"Não consegui responder agora."});}
   catch(e){chat.push({role:"assistant",content:aiErr(e)});}
   chatBusy=false;chatPaint();
@@ -993,7 +1016,7 @@ function profScreen(){
 function remItems(){
   var o=[];
   S.meds.forEach(function(m){if(m.prn)return;m.times.filter(Boolean).forEach(function(t){o.push({it:m,t:t,title:"Hora do remédio",body:m.name+" · "+medSub(m)});});});
-  S.plans.forEach(function(p){p.times.filter(Boolean).forEach(function(t){o.push({it:p,t:t,title:p.type==="consulta"?"Consulta médica hoje":p.kind==="measure"?"Hora de medir":p.kind==="mood"?"Como você está?":"Hora da atividade",body:planName(p)});});});
+  S.plans.forEach(function(p){p.times.filter(Boolean).forEach(function(t){o.push({it:p,t:t,title:p.type==="checkup"?"Check-up anual":p.type==="consulta"?"Consulta médica hoje":p.kind==="measure"?"Hora de medir":p.kind==="mood"?"Como você está?":"Hora da atividade",body:planName(p)});});});
   return o;
 }
 async function refreshPerms(){
@@ -1021,9 +1044,10 @@ async function almSync(ask){
       var hm=x.t.split(":"),H=+hm[0],M=+hm[1],it=x.it,cont=!(it.dur>0)&&(!it.start||pd(it.start)<=td);
       if(cont){
         var wds=(it.days&&it.days.length)?it.days:[null];
-        wds.forEach(function(w){var on={hour:H,minute:M};if(w!==null)on.weekday=w+1;list.push({id:id++,title:x.title,body:x.body,actionTypeId:"DOSE",extra:{i:it.id,t:x.t},schedule:{on:on,allowWhileIdle:true}});});
+        wds.forEach(function(w){var on={hour:H,minute:M};if(w!==null)on.weekday=w+1;list.push({id:id++,title:x.title,body:x.body,actionTypeId:(it.kind?undefined:"DOSE"),extra:{i:it.id,t:x.t},schedule:{on:on,allowWhileIdle:true}});});
       }else{
-        for(var i=0;i<60;i++){var day=addD(td,i),at=new Date(day.getFullYear(),day.getMonth(),day.getDate(),H,M);if(at<=now||!dueOn(it,day))continue;list.push({id:id++,title:x.title,body:x.body,actionTypeId:"DOSE",extra:{i:it.id,t:x.t},schedule:{at:at,allowWhileIdle:true}});}
+        for(var i=0;i<60;i++){var day=addD(td,i),at=new Date(day.getFullYear(),day.getMonth(),day.getDate(),H,M);if(at<=now||!dueOn(it,day))continue;list.push({id:id++,title:x.title,body:x.body,actionTypeId:(it.kind?undefined:"DOSE"),extra:{i:it.id,t:x.t},schedule:{at:at,allowWhileIdle:true}});}
+        if(it.type==="checkup"&&it.start){var cd=pd(it.start),at2=new Date(cd.getFullYear(),cd.getMonth(),cd.getDate(),H,M);if(at2>now&&Math.round((cd-td)/864e5)>=60)list.push({id:id++,title:x.title,body:x.body,extra:{i:it.id,t:x.t},schedule:{at:at2,allowWhileIdle:true}});}
       }
     });
     if(list.length>450)list=list.slice(0,450);
@@ -1043,6 +1067,7 @@ function buildIcs(){
     if(!first)return;
     var rr=(it.days&&it.days.length&&it.days.length<7)?"FREQ=WEEKLY;BYDAY="+it.days.map(function(q){return BD[q];}).join(","):"FREQ=DAILY";
     if(it.dur>0)rr+=";COUNT="+cnt;
+    if(it.type==="checkup")rr="FREQ=YEARLY";
     L.push("BEGIN:VEVENT","UID:"+it.id+"-"+x.t.replace(":","")+"@meusmedicamentos","DTSTAMP:"+stamp,"DTSTART:"+icsD(first)+"T"+T,"DTEND:"+icsD(first)+"T"+pad(+hm[0])+pad(Math.min(59,+hm[1]+15))+"00","RRULE:"+rr,icsFold("SUMMARY:"+icsEsc(x.title+" - "+x.body)),"BEGIN:VALARM","ACTION:DISPLAY","TRIGGER:PT0S","DESCRIPTION:"+icsEsc(x.title),"END:VALARM","END:VEVENT");
     n++;
   });
@@ -1058,7 +1083,7 @@ function remScreen(){
 
 /* ---- configurações ---- */
 function settingsScreen(){
-  openScr(topBar("Configurações")+'<div class="grow"><div class="fld"><label for="snm">Seu nome</label><input id="snm" maxlength="30" value="'+esc(S.name)+'" autocomplete="given-name"></div>'+optB("rem",IC.bell,"Lembretes e alarmes","")+optB("share",IC.doc,"Resumo para a consulta","")+optB("prof",IC.pro,"Para o profissional de saúde","")+optB("backup",IC.send,"Backup e restauração","Levar os dados para outro aparelho")+optB("wipe",IC.close,"Apagar todos os dados","Não dá para desfazer")+'<p class="small" style="margin-top:18px">Idealizado por <b>Farmacêutica Dra. Ana Paula de Andrade Barbosa</b>.<br>Os dados ficam somente neste aparelho. Este aplicativo não substitui a orientação do médico ou do farmacêutico.</p></div>',"set");
+  openScr(topBar("Configurações")+'<div class="grow"><div class="fld"><label for="snm">Seu nome</label><input id="snm" maxlength="30" value="'+esc(S.name)+'" autocomplete="given-name"></div>'+(canShowInstall()?optB("instsheet",IC.pill,"Atalho na tela inicial","Instalar sem baixar na loja"):"")+optB("rem",IC.bell,"Lembretes e alarmes","")+optB("share",IC.doc,"Resumo para a consulta","")+optB("prof",IC.pro,"Para o profissional de saúde","")+optB("backup",IC.send,"Backup e restauração","Levar os dados para outro aparelho")+optB("wipe",IC.close,"Apagar todos os dados","Não dá para desfazer")+'<p class="small" style="margin-top:18px">Idealizado por <b>Farmacêutica Dra. Ana Paula de Andrade Barbosa</b>.<br>Os dados ficam somente neste aparelho. Este aplicativo não substitui a orientação do médico ou do farmacêutico.</p></div>',"set");
 }
 function backupScreen(){
   openScr(topBar("Backup")+'<div class="grow"><p class="lead">Gere um código com todos os seus dados e guarde em local seguro. Para restaurar em outro aparelho, cole o código e toque em Restaurar.</p><div class="fld"><label for="bkt">Código</label><textarea id="bkt" style="min-height:140px;font-size:13px" placeholder="O código aparece aqui, ou cole um código para restaurar"></textarea></div><div class="stack"><button class="btn" data-a="bke">Gerar código</button><button class="btn sec" data-a="bkc">Copiar código</button><button class="btn ghost" data-a="bki">Restaurar</button></div><p class="small" id="bkm" role="status" style="margin-top:12px"></p></div>',"bk");
@@ -1102,6 +1127,82 @@ function initNotifActions(){
     else{quickScreen();}
   });}catch(e){}
   try{var A2=Capacitor.Plugins.App;if(A2&&A2.getLaunchUrl)A2.getLaunchUrl().then(function(r){if(r&&r.url&&r.url.indexOf("tomei")>=0)setTimeout(quickScreen,300);}).catch(function(){});if(A2&&A2.addListener)A2.addListener("appUrlOpen",function(ev){if(ev&&ev.url&&ev.url.indexOf("tomei")>=0)quickScreen();});}catch(e){}
+}
+
+/* ===== exames, check-up anual ===== */
+var EXAM_PROMPT='Leia este resultado de exame (laboratório ou imagem) e extraia os dados. Responda SOMENTE JSON no formato {"date":"AAAA-MM-DD ou vazio","lab":"nome do laboratório ou vazio","items":[{"name":"nome do exame","value":"valor como está escrito","unit":"unidade","ref":"valor de referência como está escrito","flag":"alto ou baixo ou normal ou vazio"}],"summary":"explicação simples, em até 4 frases, do que o documento mostra, sem diagnóstico e sem sugerir tratamento ou mudança de remédio; termine dizendo para conversar com o médico"}. Use flag alto ou baixo somente se o próprio documento indicar ou se o valor estiver claramente fora da referência impressa; caso contrário deixe vazio. No máximo 40 itens. Não invente nada que não esteja legível.';
+var pendEx=null,chatExam=null;
+function exDateOk(s){return /^\d{4}-\d{2}-\d{2}$/.test(String(s||""))&&!isNaN(pd(s).getTime());}
+function ckGet(){var r=null;S.plans.forEach(function(p){if(p.type==="checkup")r=p;});return r;}
+function ckSet(date){
+  S.plans=S.plans.filter(function(p){return p.type!=="checkup";});
+  S.plans.push(fixPlan({id:uid(),kind:"activity",type:"checkup",name:"Check-up anual",times:["09:00"],days:[],start:date,dur:1}));
+  save();
+}
+function ckOff(){S.plans=S.plans.filter(function(p){return p.type!=="checkup";});save();}
+function ckRoll(){
+  var c=ckGet();if(!c||!c.start)return;
+  var d=pd(c.start),t=today(),ch=false;
+  while(d<t){d=new Date(d.getFullYear()+1,d.getMonth(),d.getDate());ch=true;}
+  if(ch){c.start=iso(d);save();}
+}
+function lastExamDate(){var d="";S.exams.forEach(function(e){if(e.date>d)d=e.date;});return d;}
+function plusYear(ds){var d=pd(ds);return iso(new Date(d.getFullYear()+1,d.getMonth(),d.getDate()));}
+function exFlag(f){return f==="alto"?'<span style="color:var(--bad);font-weight:700">▲ alto</span>':f==="baixo"?'<span style="color:var(--warn);font-weight:700">▼ baixo</span>':"";}
+function exItemsHtml(items){
+  return items.map(function(i){return '<div class="li"><span class="t"><b>'+esc(i.name)+'</b>'+(i.ref?'<br><span class="small">Ref.: '+esc(i.ref)+'</span>':"")+'</span><span style="text-align:right">'+esc(i.value)+' '+esc(i.unit)+(i.flag&&i.flag!=="normal"?'<br>'+exFlag(i.flag):"")+'</span></div>';}).join("");
+}
+function examScreen(){
+  var ck=ckGet(),ex=S.exams.slice().sort(function(a,b){return a.date<b.date?1:-1;});
+  var sug=ck?ck.start:(lastExamDate()?plusYear(lastExamDate()):plusYear(iso(today())));
+  openScr(topBar("Exames e check-up")+'<div class="grow"><p class="lead">Envie a foto ou o PDF de um resultado. A IA lê os valores e uma explicação simples, você confere e guarda no app.</p>'+
+   '<div class="rowflex"><label class="btn" for="exc">'+IC.camera+'Tirar foto</label><label class="btn sec" for="exg">Foto ou PDF</label></div><input type="file" accept="image/*" capture="environment" id="exc" class="vh"><input type="file" accept="image/*,application/pdf" id="exg" class="vh">'+
+   '<p class="small" id="exs" role="status" style="margin-top:14px"></p><div id="expend"></div>'+
+   '<div class="sep"></div><h3>Lembrete anual de check-up</h3>'+
+   '<div class="card" style="margin-bottom:14px"><p class="small" style="margin-bottom:8px">'+(ck?'Próximo check-up: <b>'+fmtBR(ck.start)+'</b>. Você recebe o aviso nesse dia e a data passa sozinha para o ano seguinte.':'Escolha o dia do seu próximo check-up. O aviso se repete todo ano.')+'</p><div class="fld"><label for="ckd">Data</label><input id="ckd" type="date" value="'+esc(sug)+'"></div><div class="rowflex"><button class="btn" data-a="cksave">'+(ck?"Mudar data":"Ligar lembrete")+'</button>'+(ck?'<button class="btn ghost" data-a="ckoff">Desligar</button>':"")+'</div></div>'+
+   '<h3>Resultados guardados</h3>'+(ex.length?ex.map(function(e){return '<button class="opt" data-a="exv" data-id="'+esc(e.id)+'">'+IC.doc+'<span>'+fmtBR(e.date)+(e.lab?" · "+esc(e.lab):"")+'<small>'+e.items.length+' item(ns)</small></span></button>';}).join(""):'<p class="small">Nenhum resultado guardado ainda.</p>')+
+   '<p class="small" style="margin-top:16px">A foto ou o PDF é enviado ao Claude só para esta leitura e não fica guardado: o app guarda apenas os valores, neste aparelho. A leitura pode errar, confira com o documento. Isto não é diagnóstico.</p></div>',"exm");
+}
+async function readExam(inp){
+  var f=inp.files[0],st2=$("#exs");if(!f||!st2)return;
+  st2.textContent="Preparando o arquivo…";
+  try{
+    var isPdf=f.type==="application/pdf";
+    if(isPdf&&window.claude&&!window.API_URL){throw {code:"pdf"};}
+    var blob=isPdf?f:await shrink(f);
+    st2.textContent="Lendo o exame… pode levar até 1 minuto.";
+    var res=await aiJson(EXAM_PROMPT,blob,"exam"),items=[];
+    ((res&&res.items)||[]).slice(0,40).forEach(function(i){if(i&&i.name)items.push({name:String(i.name).slice(0,80),value:String(i.value||"").slice(0,40),unit:String(i.unit||"").slice(0,20),ref:String(i.ref||"").slice(0,60),flag:(i.flag==="alto"||i.flag==="baixo")?i.flag:""});});
+    if(!items.length){st2.textContent="Não encontrei resultados legíveis. Tente uma foto mais nítida.";pendEx=null;exPendPaint();inp.value="";return;}
+    pendEx={date:exDateOk(res.date)?res.date:iso(today()),lab:String(res.lab||"").slice(0,60),items:items,summary:String(res.summary||"").slice(0,700)};
+    st2.textContent="";exPendPaint();
+  }catch(e){var e2=$("#exs");if(e2)e2.textContent=(e&&e.code==="pdf")?"Aqui no navegador do Claude só funciona foto. PDF funciona no app instalado.":aiErr(e);}
+  inp.value="";
+}
+function exPendPaint(){
+  var el=$("#expend");if(!el)return;
+  if(!pendEx){el.innerHTML="";return;}
+  el.innerHTML='<div class="card"><p class="lbl" style="margin-bottom:8px">Confira com o documento:</p><div class="fld"><label for="exd">Data do exame</label><input id="exd" type="date" value="'+esc(pendEx.date)+'"></div>'+(pendEx.lab?'<p class="small">'+esc(pendEx.lab)+'</p>':"")+exItemsHtml(pendEx.items)+(pendEx.summary?'<div class="note info" style="margin-top:10px">'+IC.info+'<div class="nt"><b>Em palavras simples (IA)</b>'+esc(pendEx.summary)+'</div></div>':"")+'<div class="stack" style="margin-top:10px"><button class="btn" data-a="exsave">Guardar no app</button><button class="btn ghost" data-a="exno">Descartar</button></div></div>';
+}
+function exSave(){
+  if(!pendEx)return;
+  var d=$("#exd").value;if(!exDateOk(d))d=pendEx.date;
+  S.exams.push({id:uid(),date:d,lab:pendEx.lab,items:pendEx.items,summary:pendEx.summary});
+  pendEx=null;save();
+  var had=!!ckGet();examScreen();toast("Exame guardado.");
+  if(!had)setTimeout(function(){ckOffer(d);},350);
+}
+function ckOffer(d){
+  var nx=plusYear(d);
+  openSheet('<h2>Lembrete de check-up</h2><p class="lead">Quer ser avisada em <b>'+fmtBR(nx)+'</b>, um ano depois deste exame? O aviso se repete todo ano.</p><button class="btn" data-a="ckyes" data-v="'+nx+'">Sim, ligar o lembrete</button><button class="btn ghost" data-a="shno" style="margin-top:10px">Agora não</button>');
+}
+function exView(id){
+  var e=S.exams.filter(function(x){return x.id===id;})[0];if(!e)return;
+  openSheet('<h2>Exame de '+fmtBR(e.date)+'</h2>'+(e.lab?'<p class="small">'+esc(e.lab)+'</p>':"")+exItemsHtml(e.items)+(e.summary?'<div class="note info" style="margin-top:10px">'+IC.info+'<div class="nt"><b>Em palavras simples (IA)</b>'+esc(e.summary)+'</div></div>':"")+'<div class="stack" style="margin-top:12px"><button class="btn" data-a="exask" data-id="'+esc(e.id)+'">Perguntar ao assistente</button><button class="btn badl" data-a="exdel" data-id="'+esc(e.id)+'">Apagar este exame</button></div>');
+}
+function examsCtx(){
+  var ex=S.exams.slice().sort(function(a,b){return a.date<b.date?1:-1;}).slice(0,3);
+  return ex.map(function(e){return "Exame de "+fmtBR(e.date)+": "+e.items.slice(0,25).map(function(i){return i.name+" "+i.value+" "+i.unit+(i.ref?" (ref "+i.ref+")":"")+(i.flag?" ["+i.flag+"]":"");}).join("; ");}).join(" | ").slice(0,2200);
 }
 
 /* ===== eventos e inicialização ===== */
@@ -1204,6 +1305,18 @@ function act(a,el){
   case "shcopy":copyText($("#shl").value,$("#shl")).then(function(ok){var e=$("#shm");if(e)e.textContent=ok?"Link copiado.":"Selecione o texto e copie manualmente.";});break;
   case "shno":closeSheet();break;
   case "shortcut":shortcutSheet("Seus remédios");break;
+  case "exm":closeSheet();examScreen();break;
+  case "exv":closeSheet();exView(id);break;
+  case "exno":pendEx=null;exPendPaint();break;
+  case "exsave":exSave();break;
+  case "exdel":confirmBox("Apagar este exame?","Os valores guardados serão apagados deste aparelho.","Sim, apagar",function(){S.exams=S.exams.filter(function(x){return x.id!==id;});save();closeSheet();if(scr==="exm")examScreen();toast("Exame apagado.");});break;
+  case "exask":closeSheet();chatExam=id;chat=[];chatCtx=true;chatScreen();chatSend("Explique em linguagem simples o resultado do meu exame de "+fmtBR((S.exams.filter(function(x){return x.id===id;})[0]||{}).date||"")+". Dados: "+examsCtx().slice(0,1500));break;
+  case "cksave":{var cv=$("#ckd").value;if(!exDateOk(cv)||pd(cv)<today()){toast("Escolha uma data a partir de hoje.");break;}ckSet(cv);examScreen();toast("Lembrete anual ligado.");if(S.alarmsOn)almSync(false);break;}
+  case "ckoff":ckOff();examScreen();toast("Lembrete anual desligado.");break;
+  case "ckyes":ckSet(v);closeSheet();if(scr==="exm")examScreen();render();toast("Lembrete anual ligado.");if(S.alarmsOn)almSync(false);break;
+  case "hideinst":S.hideInstall=true;save();render();break;
+  case "inst":if(DP){DP.prompt();DP.userChoice.then(function(c){DP=null;if(c&&c.outcome==="accepted"){S.hideInstall=true;save();}render();}).catch(function(){});}break;
+  case "instsheet":openSheet('<h2>Atalho na tela inicial</h2><p class="lead">'+installSteps()+'</p><p class="small">Assim o app abre direto, como qualquer aplicativo, e não precisa baixar na loja.</p><button class="btn ghost" data-a="shno" style="margin-top:10px">Entendi</button>');break;
   case "scrx":closeScr();break;
   case "wback":if(wStep>0){wStep--;wizRender();}else closeScr();break;
   case "wnext":wizNext();break;
@@ -1238,6 +1351,7 @@ document.addEventListener("input",function(e){
 document.addEventListener("change",function(e){
   var el=e.target;
   if((el.id==="rx"||el.id==="rxc")&&el.files&&el.files.length)readRx(el);
+  if((el.id==="exc"||el.id==="exg")&&el.files&&el.files.length)readExam(el);
 });
 document.addEventListener("keydown",function(e){
   if(e.key==="Enter"&&e.target.id==="cin"){e.preventDefault();chatSend(e.target.value);}
@@ -1247,7 +1361,9 @@ document.addEventListener("keydown",function(e){
 $("#cfmN").onclick=function(){$("#cfm").hidden=true;cfmFn=null;};
 $("#cfmY").onclick=function(){var f=cfmFn;cfmFn=null;$("#cfm").hidden=true;if(f)f();};
 document.addEventListener("visibilitychange",function(){if(!document.hidden){var t=today();if(iso(selDate)!==iso(t)&&selDate<addD(t,-1)){}refreshPerms();render();}});
-render();
+window.addEventListener("beforeinstallprompt",function(e){e.preventDefault();DP=e;if(scr===null)render();});
+window.addEventListener("appinstalled",function(){S.hideInstall=true;save();DP=null;render();});
+ckRoll();render();
 if(!S.onboarded&&!S.meds.length&&!S.plans.length)onbShow();else if(!S.onboarded){S.onboarded=true;save();}
 refreshPerms();
 initNotifActions();
